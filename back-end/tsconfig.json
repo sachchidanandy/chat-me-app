@@ -11,6 +11,9 @@
       ],
       "@utils/*": [
         "src/utils/*"
+      ],
+      "@routers/*": [
+        "src/routers/*"
       ]
     },
     "outDir": "./dist",
