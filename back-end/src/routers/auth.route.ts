@@ -1,10 +1,10 @@
-import { Router, Request, Response } from "express";
-import tryCatchWrapper from '@utils/tryCatchWrapper';
+import { Router } from "express";
+
+import { tryCatchWrapper } from '@utils/wrapper';
+import { signup } from "@controllers/auth.controller";
 
 const authRouter = Router();
 
-authRouter.get("/", tryCatchWrapper(async (req: Request, res: Response) => {
-  res.send("auth");
-}));
+authRouter.post("/sign-up", tryCatchWrapper(signup));
 
 export default authRouter;

@@ -14,7 +14,19 @@
       ],
       "@routers/*": [
         "src/routers/*"
-      ]
+      ],
+      "@controllers/*": [
+        "src/controllers/*"
+      ],
+      "@middleware/*": [
+        "src/middleware/*"
+      ],
+      "@models/*": [
+        "src/models/*"
+      ],
+      "@constants/*": [
+        "src/constants/*"
+      ],
     },
     "outDir": "./dist",
     "forceConsistentCasingInFileNames": true,
