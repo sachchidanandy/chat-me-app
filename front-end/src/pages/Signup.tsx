@@ -2,8 +2,10 @@ import { useState } from "react";
 import InputElement from "../components/InputElement";
 import { Link } from "react-router";
 import { signupForm } from "../utils/formElements";
+import useAuth from "../hooks/useAuth";
 
 const Signup = (): JSX.Element => {
+  const { signupError, signupLoading, signUp } = useAuth();
   const [userDetail, setUserDetail] = useState({
     username: { value: '', error: false },
     fullName: { value: '', error: false },
@@ -47,17 +49,18 @@ const Signup = (): JSX.Element => {
     return formError.length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const readyToSubmit = validateForm();
     if (readyToSubmit) {
       console.log(userDetail);
+      await signUp(userDetail.username.value, userDetail.fullName.value, userDetail.email.value, userDetail.password.value);
     }
   }
 
   return (
     <div className="p-3 text-white w-full max-w-md rounded-md bg-gray-600">
-      <img alt="Your Company" src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&amp;shade=500" className="h-[75px] mx-auto my-2"></img>
+      <img alt="Company Logo" src="public/images/application-logo.jpeg" className="h-[75px] mx-auto my-2 rounded-sm" />
       <h1 className="text-2xl  mb-2 text-center">Create Your Account</h1>
       <form onSubmit={handleSubmit} className="flex flex-col items-center">
         {
@@ -83,7 +86,9 @@ const Signup = (): JSX.Element => {
           {error.map((item, index) => (<li key={index}>{item}</li>))}
         </ul>)}
 
-        <button type="submit" className="btn btn-active btn-primary my-6 w-full max-w-sm text-white font-weight-bold">Signup</button>
+        <button type="submit" className="btn btn-active btn-primary my-6 w-full max-w-sm text-white font-weight-bold">
+          {signupLoading ? 'Loading...' : 'Signup'}
+        </button>
       </form>
 
       <div className="text-center">Already have an account? <Link to="/login" className="text-primary">Login here</Link></div>

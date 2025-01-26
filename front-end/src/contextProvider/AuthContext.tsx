@@ -2,6 +2,7 @@ import { createContext, useEffect, useState } from "react";
 import { AxiosError } from 'axios';
 
 import useFetch, { useFetchImediate } from "../hooks/useFetch";
+import { encryptPrivateKey, generateEncryptionKeys, storePrivateKey } from "../utils/encryptionKeys";
 
 interface iAuthContext {
   user: null | iUser;
@@ -58,16 +59,22 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
   const signUp = async (username: string, fullName: string, email: string, password: string): Promise<void> => {
     // only make the request if the user is not already logged in
     if (!user) {
+      const { privateKey, publicKey } = generateEncryptionKeys();
+      const encryptedPrivateKey = encryptPrivateKey(privateKey, password);
+
       await signupUser({
         method: 'POST',
         data: {
           username,
           fullName,
           email,
-          password
+          password,
+          publicKey,
+          encryptedPrivateKey
         }
       });
       if (signupRes) {
+        storePrivateKey(privateKey);
         setUser(signupRes as unknown as iUser);
       }
     }
