@@ -10,7 +10,7 @@ interface iAuthContext {
   login: (email: string, password: string) => Promise<void>;
   signupError: AxiosError | null;
   signupLoading: boolean;
-  signUp: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
+  signUp: (username: string, fullName: string, email: string, password: string) => Promise<void>;
   logoutError: AxiosError | null;
   logoutLoading: boolean;
   logout: () => Promise<void>;
@@ -23,10 +23,12 @@ interface iAuthContextProviderProps {
 
 interface iUser {
   userId: string;
-  firstName: string;
-  lastName: string;
+  username: string;
+  fullName: string;
   email: string;
   profilePicUrl: string;
+  pubKey: string;
+  priKey: string;
 }
 
 const AuthContextProvider = (props: iAuthContextProviderProps) => {
@@ -53,14 +55,14 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
     }
   };
 
-  const signUp = async (firstName: string, lastName: string, email: string, password: string): Promise<void> => {
+  const signUp = async (username: string, fullName: string, email: string, password: string): Promise<void> => {
     // only make the request if the user is not already logged in
     if (!user) {
       await signupUser({
         method: 'POST',
         data: {
-          firstName,
-          lastName,
+          username,
+          fullName,
           email,
           password
         }

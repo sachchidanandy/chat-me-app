@@ -35,13 +35,7 @@ const Navbar = () => {
         </div>
       </div>
     </nav>
-  ) : (
-    <nav className="navbar bg-primary text-primary-content">
-      <div className="navbar-start">
-        <NavLink className="btn btn-ghost text-xl" to="/login">daisyUI</NavLink>
-      </div>
-    </nav>
-  )
+  ) : null;
 };
 
 export default Navbar;
