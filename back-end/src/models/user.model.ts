@@ -27,16 +27,29 @@ const userSchema = new Schema({
     type: String,
     require: true,
   },
+  profile_pic_url: {
+    type: String,
+    default: ''
+  },
   friends: [{
     friend_id: {
       type: Schema.Types.ObjectId,
       ref: 'User'
     },
-    last_chat: {
+    last_chat_timestamp: {
       type: Date,
-      default: Date.now(),
+      default: Date.now,
     }
   }]
 }, { timestamps: true });
+
+// Add index on username
+userSchema.index({ username: 1 }, { unique: true });
+
+// Add index on email
+userSchema.index({ email: 1 }, { unique: true });
+
+// Add index on full_name
+userSchema.index({ full_name: 1 });
 
 export default model('User', userSchema);
