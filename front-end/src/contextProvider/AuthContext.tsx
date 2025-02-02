@@ -1,20 +1,18 @@
 import { createContext, useEffect, useState } from "react";
-import { AxiosError } from 'axios';
 
-import useFetch, { useFetchImediate } from "../hooks/useFetch";
-import { encryptPrivateKey, generateEncryptionKeys, storePrivateKey } from "../utils/encryptionKeys";
+import useFetch, { iResposseData, useFetchImediate } from "../hooks/useFetch";
+import { decryptPrivateKey, encryptPrivateKey, generateEncryptionKeys, storePrivateKey } from "../utils/encryptionKeys";
+import Toast, { toastType } from "../components/toast";
 
 interface iAuthContext {
   user: null | iUser;
-  loginError: AxiosError | null;
   loginLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signupError: AxiosError | null;
   signupLoading: boolean;
   signUp: (username: string, fullName: string, email: string, password: string) => Promise<void>;
-  logoutError: AxiosError | null;
   logoutLoading: boolean;
   logout: () => Promise<void>;
+  handleToastToogle: (message: string, type: toastType) => void;
 }
 export const AuthContext = createContext<iAuthContext>({} as iAuthContext);
 
@@ -35,77 +33,90 @@ interface iUser {
 const AuthContextProvider = (props: iAuthContextProviderProps) => {
   const { children } = props;
   const [user, setUser] = useState<null | iUser>(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastDetails, setToastDetails] = useState({ message: '', type: toastType.success });
   const { data: userData, loading: initialLoading } = useFetchImediate('/user', { withCredentials: true });
-  const { data: loginRes, error: loginError, loading: loginLoading, request: loginUser } = useFetch('/auth/login');
-  const { data: signupRes, error: signupError, loading: signupLoading, request: signupUser } = useFetch('/auth/login');
-  const { data: logoutResponse, error: logoutError, loading: logoutLoading, request: logoutUser } = useFetch('/auth/logout');
+  const { loading: loginLoading, request: loginUser } = useFetch('/auth/login');
+  const { loading: signupLoading, request: signupUser } = useFetch('/auth/sign-up');
+  const { loading: logoutLoading, request: logoutUser } = useFetch('/auth/logout');
+
+  const handleToastToogle = (message: string, type: toastType = toastType.success) => {
+    setToastDetails({ message, type });
+    setShowToast(true);
+  }
 
   const login = async (email: string, password: string): Promise<void> => {
-    // only make the request if the user is not already logged in
     if (!user) {
-      await loginUser({
+      const { error, data: loginRes } = await loginUser({
         method: 'POST',
         data: {
-          email,
+          email: email.toLowerCase(),
           password
         }
       });
-      if (loginRes) {
-        setUser(loginRes as unknown as iUser);
+
+      if (loginRes && !error) {
+        const { user, message } = loginRes as iResposseData;
+        handleToastToogle(message);
+        const privateKey = decryptPrivateKey(user.priKey, password);
+        privateKey && storePrivateKey(privateKey);
+        setUser({ ...user, pubKey: user.pubKey, priKey: privateKey } as unknown as iUser);
+      } else if (error) {
+        handleToastToogle(error, toastType.error);
       }
     }
   };
 
   const signUp = async (username: string, fullName: string, email: string, password: string): Promise<void> => {
-    // only make the request if the user is not already logged in
     if (!user) {
       const { privateKey, publicKey } = generateEncryptionKeys();
       const encryptedPrivateKey = encryptPrivateKey(privateKey, password);
 
-      await signupUser({
+      const { error, data: signupRes } = await signupUser({
         method: 'POST',
         data: {
-          username,
-          fullName,
-          email,
+          username: username.toLowerCase(),
+          email: email.toLowerCase(),
+          fullName: fullName.toLowerCase(),
           password,
           publicKey,
           encryptedPrivateKey
         }
       });
-      if (signupRes) {
+
+      if (signupRes && !error) {
+        const { user, message } = signupRes as iResposseData;
+        handleToastToogle(message);
         storePrivateKey(privateKey);
-        setUser(signupRes as unknown as iUser);
+        setUser({ ...user, pubKey: publicKey, priKey: privateKey } as unknown as iUser);
+      } else if (error) {
+        handleToastToogle(error, toastType.error);
       }
     }
   };
 
   const logout = async () => {
     await logoutUser();
-    if (logoutResponse) {
-      setUser(null);
-    }
   };
 
   useEffect(() => {
     if (userData) {
-      setUser(userData as unknown as iUser);
+      setUser(userData?.user as unknown as iUser);
     }
   }, [userData]);
 
   return initialLoading ? <p>Loading......</p> : (
     <AuthContext.Provider value={{
       user,
-      loginError,
       loginLoading,
       login,
-      signupError,
       signupLoading,
       signUp,
-      logoutError,
       logoutLoading,
       logout,
+      handleToastToogle
     }}>
+      <Toast type={toastDetails.type} message={toastDetails.message} show={showToast} setShowToast={setShowToast} />
       {children}
     </AuthContext.Provider>
   )

@@ -1,42 +1,51 @@
 import { useCallback, useEffect, useState } from 'react';
-import axios, { AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig, AxiosError } from 'axios';
 
-interface iUseApiResponse<T> {
-  data: T | null;
-  error: AxiosError | null;
+export interface iResposseData {
+  [key: string]: any,
+  message: string
+}
+interface iUseApiResponse {
   loading: boolean;
-  request: (config?: AxiosRequestConfig) => Promise<void>;
+  request: (config?: AxiosRequestConfig) => Promise<requestReturnType>;
 }
 
 interface iUseFetchImediateResponse<T> {
   data: T | null;
-  error: AxiosError | null;
+  error: string | null;
   loading: boolean;
+}
+
+type errorResponseData = {
+  error: {
+    message: string
+  },
+  status: string
+};
+
+type requestReturnType = {
+  data: iResposseData | null,
+  error: string | null,
 }
 
 const axiosInstance = axios.create({
   withCredentials: true,
-  baseURL: 'http://localhost:5000/api/',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
   timeout: 5000,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-const useFetch = (url: string): iUseApiResponse<AxiosResponse> => {
-  const [state, setState] = useState<{
-    loading: boolean;
-    error: AxiosError | null;
-    data: AxiosResponse | null;
-  }>({
-    loading: false,
-    error: null,
-    data: null,
-  });
+const useFetch = (url: string): iUseApiResponse => {
+  const [loading, setLoading] = useState(false);
 
-  const request = useCallback(async (config: AxiosRequestConfig = {}) => {
-    setState(prev => ({ ...prev, loading: true }));
-
+  const request = useCallback(async (config: AxiosRequestConfig = {}): Promise<requestReturnType> => {
+    setLoading(true)
+    const result: requestReturnType = {
+      error: null,
+      data: null
+    };
     try {
       const response = await axiosInstance.request({
         method: 'GET',
@@ -46,20 +55,25 @@ const useFetch = (url: string): iUseApiResponse<AxiosResponse> => {
         },
         ...config
       });
-      setState({ loading: false, error: null, data: response.data });
+      result.data = response.data;
     } catch (error) {
-      setState({ loading: false, error: error as AxiosError, data: null });
+      const { response } = error as AxiosError;
+      const errorMessage = (response?.data as errorResponseData)?.error?.message || 'Something went wrong!';
+      result.error = errorMessage;
+    } finally {
+      setLoading(false);
+      return { ...result };
     }
   }, [url]);
 
-  return { ...state, request };
+  return { loading, request };
 };
 
-export const useFetchImediate = (url: string, config: AxiosRequestConfig = {}): iUseFetchImediateResponse<AxiosResponse> => {
+export const useFetchImediate = (url: string, config: AxiosRequestConfig = {}): iUseFetchImediateResponse<iResposseData> => {
   const [state, setState] = useState<{
     loading: boolean;
-    error: AxiosError | null;
-    data: AxiosResponse | null;
+    error: string | null;
+    data: iResposseData | null;
   }>({
     loading: false,
     error: null,
@@ -80,7 +94,9 @@ export const useFetchImediate = (url: string, config: AxiosRequestConfig = {}): 
       .then(response => {
         setState({ loading: false, error: null, data: response.data });
       }).catch(error => {
-        setState({ loading: false, error: error as AxiosError, data: null });
+        const { response } = error as AxiosError;
+        const errorMessage = (response?.data as errorResponseData)?.error?.message || 'Something went wrong!';
+        setState({ loading: false, error: errorMessage, data: null });
       });
   }, []);
 

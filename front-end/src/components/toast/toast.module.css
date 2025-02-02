@@ -1,0 +1,12 @@
+.toastPosition {
+  position: absolute;
+  top: 12px;
+  left: calc((100vw - 24rem) / 2);
+}
+
+@media (min-width: 768px) {
+  .toastPosition {
+    right: 0;
+    left: auto;
+  }
+}

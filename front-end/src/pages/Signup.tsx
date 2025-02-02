@@ -5,7 +5,7 @@ import { signupForm } from "../utils/formElements";
 import useAuth from "../hooks/useAuth";
 
 const Signup = (): JSX.Element => {
-  const { signupError, signupLoading, signUp } = useAuth();
+  const { signupLoading, signUp } = useAuth();
   const [userDetail, setUserDetail] = useState({
     username: { value: '', error: false },
     fullName: { value: '', error: false },
@@ -86,7 +86,11 @@ const Signup = (): JSX.Element => {
           {error.map((item, index) => (<li key={index}>{item}</li>))}
         </ul>)}
 
-        <button type="submit" className="btn btn-active btn-primary my-6 w-full max-w-sm text-white font-weight-bold">
+        <button
+          type="submit"
+          className="btn btn-active btn-primary my-6 w-full max-w-sm text-white font-weight-bold"
+          disabled={signupLoading}
+        >
           {signupLoading ? 'Loading...' : 'Signup'}
         </button>
       </form>

@@ -2,8 +2,10 @@ import { useState } from "react";
 import InputElement from "../components/InputElement";
 import { Link } from "react-router";
 import { loginForm } from "../utils/formElements";
+import useAuth from "../hooks/useAuth";
 
 const Login = (): JSX.Element => {
+  const { loginLoading, login } = useAuth();
   const [userDetail, setUserDetail] = useState({
     email: { value: '', error: false },
     password: { value: '', error: false },
@@ -40,11 +42,11 @@ const Login = (): JSX.Element => {
     return formError.length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const readyToSubmit = validateForm();
     if (readyToSubmit) {
-      console.log(userDetail);
+      await login(userDetail.email.value, userDetail.password.value);
     }
   }
 
@@ -77,7 +79,11 @@ const Login = (): JSX.Element => {
           {error.map((item, index) => (<li key={index}>{item}</li>))}
         </ul>)}
 
-        <button type="submit" className="btn btn-active btn-primary my-6 w-full max-w-sm text-white font-weight-bold">Login</button>
+        <button
+          type="submit"
+          className="btn btn-active btn-primary my-6 w-full max-w-sm text-white font-weight-bold"
+          disabled={loginLoading}
+        >{loginLoading ? 'Logging in...' : ' Login'}</button>
       </form>
 
       <div className="text-center">Not a member? <Link to="/register" className="text-primary">Start Chatting.</Link></div>
