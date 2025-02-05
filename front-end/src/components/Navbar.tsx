@@ -6,7 +6,7 @@ import useAuth from "../hooks/useAuth"
 // create a navigation bar
 const Navbar = () => {
   const { user } = useAuth();
-  return user ? (
+  return true ? (
     <nav className="navbar bg-primary text-primary-content">
       <div className="flex-1">
         <NavLink className="btn btn-ghost text-xl" to="/">daisyUI</NavLink>
