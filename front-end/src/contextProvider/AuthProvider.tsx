@@ -2,7 +2,7 @@ import { createContext, useEffect, useState } from "react";
 
 import useFetch, { iResposseData, useFetchImediate } from "../hooks/useFetch";
 import { decryptPrivateKey, encryptPrivateKey, generateEncryptionKeys, storePrivateKey } from "../utils/encryptionKeys";
-import Toast, { toastType } from "../components/toast";
+import Toast, { toastType } from "../components/toast/Toast";
 
 interface iAuthContext {
   user: null | iUser;

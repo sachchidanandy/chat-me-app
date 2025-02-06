@@ -17,7 +17,7 @@ function App() {
         <div className="flex flex-col items-center justify-center align-center h-full w-full">
           <FriendsProvider>
             <Routes>
-              <Route path="/chats/:id?" element={<Dashboard />} />
+              <Route path="/chats/:friendId?" element={<Dashboard />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Signup />} />
             </Routes>

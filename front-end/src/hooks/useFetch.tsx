@@ -55,7 +55,7 @@ const useFetch = (url: string): iUseApiResponse => {
         },
         ...config
       });
-      result.data = response.data;
+      result.data = response.data.data;
     } catch (error) {
       const { response } = error as AxiosError;
       const errorMessage = (response?.data as errorResponseData)?.error?.message || 'Something went wrong!';
@@ -92,7 +92,7 @@ export const useFetchImediate = (url: string, config: AxiosRequestConfig = {}): 
         ...config
       })
       .then(response => {
-        setState({ loading: false, error: null, data: response.data });
+        setState({ loading: false, error: null, data: response.data.data });
       }).catch(error => {
         const { response } = error as AxiosError;
         const errorMessage = (response?.data as errorResponseData)?.error?.message || 'Something went wrong!';

@@ -1,12 +1,15 @@
 import { createContext, useEffect, useReducer } from "react";
 import useFetch from "../hooks/useFetch";
 import useAuth from "../hooks/useAuth";
+import { mockFriendsList } from "./mock";
 
 export interface iFriendsDetail {
   id: string,
   name: string,
   pubKey: string,
   profilePicUrl: string,
+  lastMessage?: string,
+  lastChatTime?: string,
 };
 
 export interface iFriendsContext {
@@ -41,7 +44,7 @@ const friendsReducer = (state: stateType, action: actionType) => {
 const FriendsProvider = ({ children }: any) => {
   const { user } = useAuth();
   const [state, dispatch] = useReducer(friendsReducer, {
-    friends: [], selectedFriends: { id: '', name: '', pubKey: '', profilePicUrl: '' }
+    friends: mockFriendsList, selectedFriends: { id: '', name: '', pubKey: '', profilePicUrl: '' }
   });
   const { loading, request } = useFetch('/friends');
 

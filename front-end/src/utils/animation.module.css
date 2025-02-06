@@ -1,0 +1,101 @@
+@keyframes kSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes kSlideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes kSlideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+
+@keyframes kSlideOutLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+/* Define the fade-in animation */
+@keyframes kFadeIn {
+  from {
+    opacity: 0;
+    /* Start fully transparent */
+  }
+
+  to {
+    opacity: 1;
+    /* End fully opaque */
+  }
+}
+
+/* Define the fade-out animation */
+@keyframes kFadeOut {
+  from {
+    opacity: 1;
+    /* Start fully opaque */
+  }
+
+  to {
+    opacity: 0;
+    /* End fully transparent */
+  }
+}
+
+/* Apply the animation to the element */
+.fadeOut {
+  animation: kFadeOut 0.5s ease-in-out;
+  /* Duration: 1 second, easing: ease-in-out */
+}
+
+/* Apply the animation to the element */
+.fadeIn {
+  animation: kFadeIn 0.5s ease-in-out;
+  /* Duration: 1 second, easing: ease-in-out */
+}
+
+.slideInRight {
+  animation: kSlideInRight 0.5s ease-in-out;
+}
+
+.slideOutRight {
+  animation: kSlideOutRight 0.5s ease-in-out;
+}
+
+.slideInLeft {
+  animation: kSlideInLeft 0.5s ease-in-out;
+}
+
+.slideOutLeft {
+  animation: kSlideOutLeft 0.5s ease-in-out;
+}

@@ -1,11 +1,13 @@
+import useFriends from "../../hooks/useFriends";
 import Svg from "../Svg";
 
 const ChatHeader = () => {
+  const { selectedFriends: { name, profilePicUrl } } = useFriends();
   return (
     <div className="px-2 py-1 flex justify-between items-center text-base-content border-b">
       <div className="flex items-center gap-2">
-        <img className="size-14 rounded-[50%]" src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" alt="" />
-        <span className="text-lg font-semibold">John Doe</span>
+        <img className="size-14 rounded-full" src={profilePicUrl} alt={`${name}-profile-pic`} />
+        <span className="text-lg font-semibold">{name}</span>
       </div>
       <div className="flex items-center gap-2">
         <button className="btn btn-ghost btn-circle" id="phone-call-button">
