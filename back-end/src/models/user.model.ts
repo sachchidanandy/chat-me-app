@@ -5,15 +5,21 @@ const userSchema = new Schema({
     type: String,
     required: true,
     unique: true,
+    trim: true,
+    lowercase: true,
   },
   email: {
     type: String,
     require: true,
     unique: true,
+    trim: true,
+    lowercase: true,
   },
   full_name: {
     type: String,
     require: true,
+    trim: true,
+    lowercase: true,
   },
   password: {
     type: String,
@@ -30,26 +36,9 @@ const userSchema = new Schema({
   profile_pic_url: {
     type: String,
     default: ''
-  },
-  friends: [{
-    friend_id: {
-      type: Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    last_chat_timestamp: {
-      type: Date,
-      default: Date.now,
-    }
-  }]
+  }
 }, { timestamps: true });
 
-// Add index on username
-userSchema.index({ username: 1 }, { unique: true });
-
-// Add index on email
-userSchema.index({ email: 1 }, { unique: true });
-
-// Add index on full_name
-userSchema.index({ full_name: 1 });
+// Not adding any specific index as already added search_users index in mongoDB Atlas
 
 export default model('User', userSchema);

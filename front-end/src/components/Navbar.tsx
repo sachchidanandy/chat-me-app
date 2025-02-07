@@ -5,8 +5,10 @@ import useAuth from "../hooks/useAuth"
 
 // create a navigation bar
 const Navbar = () => {
-  const { user } = useAuth();
-  return true ? (
+  const { user, logout } = useAuth();
+  const { userId, profilePicUrl } = user || {};
+
+  return userId ? (
     <nav className="navbar bg-primary text-primary-content">
       <div className="flex-1">
         <NavLink className="btn btn-ghost text-xl" to="/">daisyUI</NavLink>
@@ -16,8 +18,8 @@ const Navbar = () => {
           <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
             <div className="w-10 rounded-full">
               <img
-                alt="Tailwind CSS Navbar component"
-                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
+                alt="profile-pic"
+                src={profilePicUrl} />
             </div>
           </div>
           <ul
@@ -30,7 +32,7 @@ const Navbar = () => {
               </NavLink>
             </li>
             <li><NavLink to="setting">Settings</NavLink></li>
-            <li><a>Logout</a></li>
+            <li><a onClick={logout}>Logout</a></li>
           </ul>
         </div>
       </div>

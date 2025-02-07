@@ -34,8 +34,8 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// connectDB(() => {
-app.listen(PORT, () => {
-  console.log(`[server]: Server is running at http://localhost:${PORT}`);
+connectDB(() => {
+  app.listen(PORT, () => {
+    console.log(`[server]: Server is running at http://localhost:${PORT}`);
+  });
 });
-// });

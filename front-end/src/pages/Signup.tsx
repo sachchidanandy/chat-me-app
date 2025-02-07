@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import InputElement from "../components/InputElement";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { signupForm } from "../utils/formElements";
 import useAuth from "../hooks/useAuth";
 
 const Signup = (): JSX.Element => {
-  const { signupLoading, signUp } = useAuth();
+  const navigate = useNavigate();
+  const { signupLoading, signUp, user } = useAuth();
   const [userDetail, setUserDetail] = useState({
     username: { value: '', error: false },
     fullName: { value: '', error: false },
@@ -53,10 +54,15 @@ const Signup = (): JSX.Element => {
     e.preventDefault();
     const readyToSubmit = validateForm();
     if (readyToSubmit) {
-      console.log(userDetail);
       await signUp(userDetail.username.value, userDetail.fullName.value, userDetail.email.value, userDetail.password.value);
     }
   }
+
+  useEffect(() => {
+    if (user?.userId) {
+      navigate('/');
+    }
+  }, [user]);
 
   return (
     <div className="p-3 text-white w-full max-w-md rounded-md bg-gray-600">

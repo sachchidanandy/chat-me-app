@@ -19,6 +19,10 @@ export const getPrivateKey = (): string | null => {
   return localStorage.getItem('privateKey');
 };
 
+export const removePrivateKey = (): void => {
+  localStorage.removeItem('privateKey');
+}
+
 export const encryptPrivateKey = (privateKey: string, passphrase: string): string => {
   // Hash the passphrase into a 32-byte key using SHA-256
   const passphraseBytes = naclUtil.decodeBase64(

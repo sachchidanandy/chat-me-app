@@ -1,8 +1,16 @@
 import { createContext, useEffect, useState } from "react";
 
 import useFetch, { iResposseData, useFetchImediate } from "../hooks/useFetch";
-import { decryptPrivateKey, encryptPrivateKey, generateEncryptionKeys, storePrivateKey } from "../utils/encryptionKeys";
+import {
+  decryptPrivateKey,
+  encryptPrivateKey,
+  generateEncryptionKeys,
+  getPrivateKey,
+  removePrivateKey,
+  storePrivateKey
+} from "../utils/encryptionKeys";
 import Toast, { toastType } from "../components/toast/Toast";
+import InitialLoader from "../components/InitialLoader";
 
 interface iAuthContext {
   user: null | iUser;
@@ -32,10 +40,11 @@ interface iUser {
 
 const AuthContextProvider = (props: iAuthContextProviderProps) => {
   const { children } = props;
+
   const [user, setUser] = useState<null | iUser>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastDetails, setToastDetails] = useState({ message: '', type: toastType.success });
-  const { data: userData, loading: initialLoading } = useFetchImediate('/user', { withCredentials: true });
+  const { data: userData, loading: initialLoading, error: initialError } = useFetchImediate('/user', { withCredentials: true });
   const { loading: loginLoading, request: loginUser } = useFetch('/auth/login');
   const { loading: signupLoading, request: signupUser } = useFetch('/auth/sign-up');
   const { loading: logoutLoading, request: logoutUser } = useFetch('/auth/logout');
@@ -96,16 +105,31 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
   };
 
   const logout = async () => {
-    await logoutUser();
+    try {
+      await logoutUser();
+    } catch (error) {
+      console.log("Error while logging out: ", error);
+    } finally {
+      setUser(null);
+      removePrivateKey();
+    }
   };
 
   useEffect(() => {
-    if (userData) {
-      setUser(userData?.user as unknown as iUser);
+    if (userData && userData.user) {
+      const privateKey = getPrivateKey();
+      if (privateKey) {
+        setUser({ ...userData.user, pubKey: userData.user.pubKey, priKey: getPrivateKey() } as unknown as iUser);
+      } else {
+        logout();
+      }
+    } else if (initialError) {
+      setUser(null);
+      removePrivateKey();
     }
-  }, [userData]);
+  }, [userData, initialError]);
 
-  return initialLoading ? <p>Loading......</p> : (
+  return initialLoading ? <InitialLoader /> : (
     <AuthContext.Provider value={{
       user,
       loginLoading,

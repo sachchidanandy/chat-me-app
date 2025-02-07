@@ -12,13 +12,13 @@ export const signup = async (req: Request, res: Response) => {
   const { username, email, fullName, password, publicKey, encryptedPrivateKey } = req.body;
 
   // check if email already exist
-  const existingUser = await User.find({ email });
+  const existingUser = await User.findOne({ email });
   if (existingUser) {
     throw new ErrorResponse(EMAIL_ALREADY_REGISTERED, BAD_REQUEST);
   }
 
   // ecrypt password
-  const encryptedPassword = encryptPassword(password);
+  const encryptedPassword = await encryptPassword(password);
 
   // create new user
   const createdUser = new User({

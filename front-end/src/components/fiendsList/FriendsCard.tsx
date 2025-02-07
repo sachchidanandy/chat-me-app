@@ -12,7 +12,7 @@ const FriendsCard = ({ friend, selected }: iFriendsCardProps) => {
 
   const bgClasses = selected ? ' bg-primary text-primary-content' : ' text-base-content btn-ghost';
   return (
-    <Link to={`/chats/${id}`} className={animationStyle.fadeIn}>
+    <Link to={`/${id}`} className={animationStyle.fadeIn}>
       <div className={"card card-side h-16 px-1 max-w-sm hover:cursor-pointer" + bgClasses}>
         <figure>
           <img

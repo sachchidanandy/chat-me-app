@@ -11,6 +11,7 @@ const FriedsList = (props: iFriendsListProps): JSX.Element => {
     <div className="flex flex-col w-full gap-1 overflow-scroll">
       {friends.map((friend: iFriendsDetail) => (
         <FriendsCard
+          key={friend.id}
           friend={friend}
           selected={friend.id === selectedFriendId}
         />

@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import InputElement from "../components/InputElement";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { loginForm } from "../utils/formElements";
 import useAuth from "../hooks/useAuth";
 
 const Login = (): JSX.Element => {
-  const { loginLoading, login } = useAuth();
+  const navigate = useNavigate();
+  const { loginLoading, login, user } = useAuth();
   const [userDetail, setUserDetail] = useState({
     email: { value: '', error: false },
     password: { value: '', error: false },
@@ -49,6 +50,12 @@ const Login = (): JSX.Element => {
       await login(userDetail.email.value, userDetail.password.value);
     }
   }
+
+  useEffect(() => {
+    if (user?.userId) {
+      navigate('/');
+    }
+  }, [user]);
 
   return (
     <div className="p-3 text-white w-full max-w-md rounded-md bg-gray-600">
