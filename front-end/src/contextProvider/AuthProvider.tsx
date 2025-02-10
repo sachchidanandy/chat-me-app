@@ -10,7 +10,7 @@ import {
   storePrivateKey
 } from "../utils/encryptionKeys";
 import Toast, { toastType } from "../components/toast/Toast";
-import InitialLoader from "../components/InitialLoader";
+import Loader from "../components/Loader";
 
 interface iAuthContext {
   user: null | iUser;
@@ -28,7 +28,7 @@ interface iAuthContextProviderProps {
   children: React.ReactNode;
 };
 
-interface iUser {
+export interface iUser {
   userId: string;
   username: string;
   fullName: string;
@@ -129,7 +129,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
     }
   }, [userData, initialError]);
 
-  return initialLoading ? <InitialLoader /> : (
+  return initialLoading ? <Loader /> : (
     <AuthContext.Provider value={{
       user,
       loginLoading,

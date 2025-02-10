@@ -10,7 +10,7 @@ interface iUseApiResponse {
   request: (config?: AxiosRequestConfig) => Promise<requestReturnType>;
 }
 
-interface iUseFetchImediateResponse<T> {
+interface iFetchImediate<T> {
   data: T | null;
   error: string | null;
   loading: boolean;
@@ -69,7 +69,7 @@ const useFetch = (url: string): iUseApiResponse => {
   return { loading, request };
 };
 
-export const useFetchImediate = (url: string, config: AxiosRequestConfig = {}): iUseFetchImediateResponse<iResposseData> => {
+export const useFetchImediate = (url: string, config: AxiosRequestConfig = {}): iFetchImediate<iResposseData> => {
   const [state, setState] = useState<{
     loading: boolean;
     error: string | null;
@@ -99,6 +99,48 @@ export const useFetchImediate = (url: string, config: AxiosRequestConfig = {}): 
         setState({ loading: false, error: errorMessage, data: null });
       });
   }, []);
+
+  return { ...state };
+};
+
+export const useFetchDebounce = (url: string, config: AxiosRequestConfig = {}, searchQuery: string): iFetchImediate<iResposseData> => {
+  const [state, setState] = useState<{
+    loading: boolean;
+    error: string | null;
+    data: iResposseData | null;
+  }>({
+    loading: false,
+    error: null,
+    data: null,
+  });
+
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 4) {
+      setState(prev => ({ ...prev, loading: false }));
+      return;
+    }
+    const timer = setTimeout(() => {
+      setState(prev => ({ ...prev, loading: true }));
+      axiosInstance
+        .request({
+          method: 'GET',
+          url,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          ...config
+        })
+        .then(response => {
+          setState({ loading: false, error: null, data: response.data.data });
+        }).catch(error => {
+          const { response } = error as AxiosError;
+          const errorMessage = (response?.data as errorResponseData)?.error?.message || 'Something went wrong!';
+          setState({ loading: false, error: errorMessage, data: null });
+        });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   return { ...state };
 };

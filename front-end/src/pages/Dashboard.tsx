@@ -8,17 +8,24 @@ import FriendsList from "../components/fiendsList/FriendsList";
 import ChatSection from "../components/chatSection/ChatSection";
 import { iFriendsDetail } from "../contextProvider/FriendsProvider";
 import animationStyle from '../utils/animation.module.css';
+import { useFetchDebounce } from "../hooks/useFetch";
+import UserSearchList from "../components/searchUsersList/UserSearchList";
 
 const Dashboard = () => {
   const { friendId } = useParams();
   const { friends, selectedFriends, setSelectedFriends } = useFriends();
   const [filterData, setFilterData] = useState<iFriendsDetail[] | null>(null)
-  const [searchValue, setSearchValue] = useState('');
-  const debouncedSearchValue = useDebounce(searchValue, 200);
+  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    data: globalSearchData,
+    loading: globalSearchLoading,
+    error: globalSearchError
+  } = useFetchDebounce('/search', {}, searchQuery);
+  const debouncedSearchValue = useDebounce(searchQuery, 200);
 
   const handleBackButton = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    setSearchValue('');
+    setSearchQuery('');
   }
 
   useEffect(() => {
@@ -48,13 +55,22 @@ const Dashboard = () => {
               type="text"
               className="grow"
               placeholder="Search"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
             <Svg svgName="search" />
           </label>
         </div>
-        <FriendsList friends={filterData ? filterData : friends} selectedFriendId={selectedFriends?.id} />
+        {debouncedSearchValue ? <UserSearchList
+          friends={filterData}
+          globalSearchData={globalSearchData}
+          globalSearchLoading={globalSearchLoading}
+          globalSearchError={globalSearchError}
+        /> : <FriendsList
+          friends={friends}
+          selectedFriendId={selectedFriends?.id}
+        />
+        }
       </div>
       {
         (selectedFriends || true) && <ChatSection />

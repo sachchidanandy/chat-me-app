@@ -1,9 +1,9 @@
 
 import nacl from 'tweetnacl';
 import naclUtil from 'tweetnacl-util';
-import { EncryptedMessage } from '../types/common';
+import { iEncryptedMessage } from '../types/common';
 
-export const encryptMessage = (message: string, sharedSecret: string): EncryptedMessage => {
+export const encryptMessage = (message: string, sharedSecret: string): iEncryptedMessage => {
   const nonce = nacl.randomBytes(nacl.box.nonceLength);
   const messageUint8 = naclUtil.decodeUTF8(message);
   const sharedSecretUint8 = naclUtil.decodeBase64(sharedSecret);
@@ -15,7 +15,7 @@ export const encryptMessage = (message: string, sharedSecret: string): Encrypted
   };
 };
 
-export const decryptMessage = (encrypted: EncryptedMessage, sharedSecret: string): string | null => {
+export const decryptMessage = (encrypted: iEncryptedMessage, sharedSecret: string): string | null => {
   const cipherTextUint8 = naclUtil.decodeBase64(encrypted.cipherText);
   const nonceUint8 = naclUtil.decodeBase64(encrypted.nonce);
   const sharedSecretUint8 = naclUtil.decodeBase64(sharedSecret);

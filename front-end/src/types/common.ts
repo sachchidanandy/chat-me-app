@@ -1,15 +1,21 @@
-export interface KeyPair {
+export interface iKeyPair {
   publicKey: string;
   privateKey: string;
 }
 
-export interface EncryptedMessage {
+export interface iEncryptedMessage {
   cipherText: string;
   nonce: string;
 }
 
-export interface MessagePayload {
+export interface iMessagePayload {
   senderId: string;
   recipientId: string;
-  encryptedMessage: EncryptedMessage;
+  encryptedMessage: iEncryptedMessage;
+}
+export interface iSearchUser {
+  id: string;
+  fullName: string;
+  profilePicUrl: string;
+  username: string;
 }

@@ -1,9 +1,9 @@
 import nacl from 'tweetnacl';
 import naclUtil from 'tweetnacl-util';
 import CryptoJS from 'crypto-js';
-import { KeyPair } from '../types/common';
+import { iKeyPair } from '../types/common';
 
-export const generateEncryptionKeys = (): KeyPair => {
+export const generateEncryptionKeys = (): iKeyPair => {
   const keyPair = nacl.box.keyPair();
   return {
     publicKey: naclUtil.encodeBase64(keyPair.publicKey),

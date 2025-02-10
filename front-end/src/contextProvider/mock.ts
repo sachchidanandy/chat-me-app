@@ -280,3 +280,30 @@ export const mockFriendsList = [
     lastChatTime: "21st Jan 2025"
   }
 ]
+
+export const mockUsers = [
+  {
+    id: "1",
+    fullName: "Emily",
+    profilePicUrl: "https://dummyjson.com/icon/emilys/128",
+    username: "Emily_002",
+  },
+  {
+    id: "2",
+    fullName: "Michael",
+    profilePicUrl: "https://dummyjson.com/icon/michaelw/128",
+    username: "Michael_002",
+  },
+  {
+    id: "3",
+    fullName: "Sophia",
+    profilePicUrl: "https://dummyjson.com/icon/sophiab/128",
+    username: "Sophia_002",
+  },
+  {
+    id: "4",
+    fullName: "James",
+    profilePicUrl: "https://dummyjson.com/icon/jamesd/128",
+    username: "James_002",
+  }
+]
