@@ -18,7 +18,7 @@ const UserSearchList = (props: iUserSearchListProps): JSX.Element => {
 
   return (
     <div className="flex flex-col w-full gap-1 overflow-scroll">
-      <div className="max-h-[45%] mb-2 overflow-x-auto w-full">
+      <div className="max-h-[45%] mb-2 overflow-x-auto w-full min-h-28">
         <h3 className="sticky top-0 z-50 p-2 capitalize bg-gray-700">Friends</h3>
         {friends?.map((friend: iFriendsDetail) => (
           <FriendsCard

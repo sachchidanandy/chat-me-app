@@ -6,6 +6,6 @@ import protectedPathMiddleware from "@middleware/protectedPath.middleware";
 
 const userRouter = Router();
 
-userRouter.get("/:searchQuery/:page?/:limit?", protectedPathMiddleware, tryCatchWrapper(searchUsers));
+userRouter.get("/search/:searchQuery/:page?/:limit?", protectedPathMiddleware, tryCatchWrapper(searchUsers));
 
 export default userRouter;

@@ -53,17 +53,45 @@ export const searchUsers = async (req: Request, res: Response) => {
     },
     {
       $match: {
-        _id: { $nin: friendIds }
+        _id: { $nin: friendIds, $ne: userId }
       }
     },
     { $skip: offset },
     { $limit: limit },
+    {
+      $lookup: {
+        from: 'FriendRequest',
+        let: { searchedUserId: "$_id", currentUserId: userId },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$sender_id", "$$currentUserId"] }, // Request sent by logged-in user
+                  { $eq: ["$receiver_id", "$$searchedUserId"] }, // Request received by searched user
+                  { $eq: ["$status", "pending"] } // Pending requests only
+                ]
+              }
+            }
+          },
+          { $project: { _id: 1 } }
+        ],
+        as: "friendRequest"
+      }
+    },
+    {
+      $addFields: {
+        isRequestSent: { $gt: [{ $size: "$friendRequest" }, 0] } // Convert array to boolean
+      }
+    },
     {
       $project: {
         id: '$_id',
         fullName: '$full_name',
         profilePicUrl: '$profile_pic_url',
         username: 1,
+        isRequestSent: 1,
+        _id: 0,
       }
     },
   ]);

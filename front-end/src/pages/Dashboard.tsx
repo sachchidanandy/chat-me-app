@@ -20,7 +20,7 @@ const Dashboard = () => {
     data: globalSearchData,
     loading: globalSearchLoading,
     error: globalSearchError
-  } = useSearchDebounce('/users', searchQuery);
+  } = useSearchDebounce('/users/search', searchQuery);
   const debouncedSearchValue = useDebounce(searchQuery, 200);
 
   const handleBackButton = (e: React.MouseEvent<HTMLButtonElement>) => {

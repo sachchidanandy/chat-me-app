@@ -103,7 +103,7 @@ export const useFetchImediate = (url: string, config: AxiosRequestConfig = {}): 
   return { ...state };
 };
 
-export const useSearchDebounce = (url: string, searchQuery: string): iFetchImediate<iResposseData> => {
+export const useSearchDebounce = (url: string, searchQuery: string, page?: number, limit?: number): iFetchImediate<iResposseData> => {
   const [state, setState] = useState<{
     loading: boolean;
     error: string | null;
@@ -121,10 +121,17 @@ export const useSearchDebounce = (url: string, searchQuery: string): iFetchImedi
     }
     const timer = setTimeout(() => {
       setState(prev => ({ ...prev, loading: true }));
+      let reqUrl = `${url}/${searchQuery}`;
+      if (page) {
+        reqUrl = reqUrl + `/${page}`;
+      }
+      if (limit) {
+        reqUrl = reqUrl + `/${limit}`;
+      }
       axiosInstance
         .request({
           method: 'GET',
-          url: `${url}/${searchQuery}`,
+          url: reqUrl,
           headers: {
             'Content-Type': 'application/json'
           },
