@@ -4,7 +4,7 @@ import { INT_SER_ERROR } from '@constants/errorMessages';
 import { INTERNAL_SERVER_ERROR, SUCCESS } from '@constants/statusCode';
 import { ErrorResponse } from './errorResponse';
 
-type controller = (req: Request, res: Response) => Promise<Response>;
+type controller = (req: Request, res: Response, next: NextFunction) => Promise<Response | void>;
 
 export const sendErrorResponse = (
   res: Response,
@@ -33,7 +33,7 @@ export const sendSuccessResponse = (
 export const tryCatchWrapper = (controller: controller) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await controller(req, res);
+      await controller(req, res, next);
     } catch (error: unknown) {
       next(error);
     }

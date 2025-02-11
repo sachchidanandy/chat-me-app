@@ -8,7 +8,12 @@ const generateToken = (id: string) => {
 };
 
 const verifyToken = (token: string) => {
-  return jwt.verify(token, JWT_SECRET as string);
+  try {
+    return jwt.verify(token, JWT_SECRET as string);
+  } catch (error) {
+    console.log("Error while verify token", error);
+    return null;
+  }
 };
 
 export { generateToken, verifyToken };

@@ -26,4 +26,5 @@ friendsSchema.index({ 'friends_list.last_chat_timestamp': -1 });
 // Add index on friends_list.friend_id
 friendsSchema.index({ 'friends_list.friend_id': 1 });
 
-module.exports = model('Friends', friendsSchema);
+const Friends = model('Friends', friendsSchema);
+export default Friends;

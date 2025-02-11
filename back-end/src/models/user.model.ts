@@ -1,6 +1,16 @@
-import { Schema, model } from 'mongoose';
+import { Document, Schema, model } from 'mongoose';
 
-const userSchema = new Schema({
+interface iUser extends Document {
+  username: string;
+  email: string;
+  full_name: string;
+  password: string;
+  pub_key: string;
+  priv_key: string;
+  profile_pic_url: string;
+};
+
+const userSchema = new Schema<iUser>({
   username: {
     type: String,
     required: true,

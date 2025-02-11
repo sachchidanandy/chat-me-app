@@ -103,7 +103,7 @@ export const useFetchImediate = (url: string, config: AxiosRequestConfig = {}): 
   return { ...state };
 };
 
-export const useFetchDebounce = (url: string, config: AxiosRequestConfig = {}, searchQuery: string): iFetchImediate<iResposseData> => {
+export const useSearchDebounce = (url: string, searchQuery: string): iFetchImediate<iResposseData> => {
   const [state, setState] = useState<{
     loading: boolean;
     error: string | null;
@@ -124,11 +124,10 @@ export const useFetchDebounce = (url: string, config: AxiosRequestConfig = {}, s
       axiosInstance
         .request({
           method: 'GET',
-          url,
+          url: `${url}/${searchQuery}`,
           headers: {
             'Content-Type': 'application/json'
           },
-          ...config
         })
         .then(response => {
           setState({ loading: false, error: null, data: response.data.data });

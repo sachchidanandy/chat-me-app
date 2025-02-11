@@ -1,5 +1,6 @@
 import '../newrelic';
 import express, { Express, NextFunction, Request, Response } from 'express';
+import cookieParser from "cookie-parser";
 import cors from 'cors';
 
 import router from '@routers/index';
@@ -15,6 +16,7 @@ app.use(cors({
   origin: CORS_ALLOWED_DOMAIN, // Replace with your React app's origin
   credentials: true, // Allow credentials (cookies, authorization headers, etc.)
 }));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

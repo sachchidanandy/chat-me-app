@@ -8,7 +8,7 @@ import FriendsList from "../components/fiendsList/FriendsList";
 import ChatSection from "../components/chatSection/ChatSection";
 import { iFriendsDetail } from "../contextProvider/FriendsProvider";
 import animationStyle from '../utils/animation.module.css';
-import { useFetchDebounce } from "../hooks/useFetch";
+import { useSearchDebounce } from "../hooks/useFetch";
 import UserSearchList from "../components/searchUsersList/UserSearchList";
 
 const Dashboard = () => {
@@ -20,7 +20,7 @@ const Dashboard = () => {
     data: globalSearchData,
     loading: globalSearchLoading,
     error: globalSearchError
-  } = useFetchDebounce('/search', {}, searchQuery);
+  } = useSearchDebounce('/users', searchQuery);
   const debouncedSearchValue = useDebounce(searchQuery, 200);
 
   const handleBackButton = (e: React.MouseEvent<HTMLButtonElement>) => {

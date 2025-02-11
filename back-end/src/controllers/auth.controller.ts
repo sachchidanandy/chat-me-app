@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 
 import User from '@models/user.model';
-import { BAD_REQUEST, CREATED } from "@constants/statusCode";
+import { BAD_REQUEST, CREATED, UNAUTHORISED } from "@constants/statusCode";
 import { sendSuccessResponse } from "@utils/wrapper";
-import { EMAIL_ALREADY_REGISTERED, INVALID_CREDENTIALS } from "@constants/errorMessages";
+import { EMAIL_ALREADY_REGISTERED, INVALID_CREDENTIALS, USER_NOT_FOUND } from "@constants/errorMessages";
 import { ErrorResponse } from "@utils/errorResponse";
 import { generateToken } from "@utils/jwtToken";
 import { encryptPassword, comparePassword } from "@utils/encryption";
@@ -73,7 +73,7 @@ export const loginUser = async (req: Request, res: Response) => {
   res.cookie('access_token', jwtToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
+    sameSite: 'strict',
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 
@@ -93,4 +93,28 @@ export const loginUser = async (req: Request, res: Response) => {
 export const logoutUser = async (req: Request, res: Response) => {
   res.clearCookie('access_token');
   return sendSuccessResponse(res, { message: 'User logged out successfully!' });
+};
+
+export const fetchLogedInUser = async (req: Request, res: Response) => {
+  const userId = req.body?.userId;
+
+  if (!userId) {
+    throw new ErrorResponse(INVALID_CREDENTIALS, UNAUTHORISED);
+  }
+
+  const userDetails = await User.findById(userId).select({ createdAt: 0, updatedAt: 0, priv_key: 0, password: 0 });
+  if (!userDetails) {
+    throw new ErrorResponse(USER_NOT_FOUND, UNAUTHORISED);
+  }
+
+  const responseBody = {
+    userId: userDetails._id as unknown as string,
+    username: userDetails.username,
+    fullName: userDetails.full_name,
+    email: userDetails.email,
+    profilePicUrl: userDetails.profile_pic_url,
+    pubKey: userDetails.pub_key,
+  };
+
+  return sendSuccessResponse(res, { user: responseBody, message: 'User detail fetched successfully.' });
 };
