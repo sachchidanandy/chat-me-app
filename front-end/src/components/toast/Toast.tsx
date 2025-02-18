@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import Svg from "../Svg";
 import toastStyle from './toast.module.css';
 
-export enum toastType {
+export enum eToastType {
   success = 'success',
   error = 'error',
   info = 'info',
@@ -11,24 +11,24 @@ export enum toastType {
 }
 
 interface iToastProps {
-  type: toastType;
+  type: eToastType;
   message: string | null;
   show: boolean;
   setShowToast: (status: boolean) => void;
 }
 
-const getAlertClass = (type: toastType) => {
+const getAlertClass = (type: eToastType) => {
   switch (type) {
-    case toastType.success:
-      return `alert alert-success max-w-sm p-2 transition-all transition-discrete ${toastStyle.toastPosition}`;
-    case toastType.error:
-      return `alert alert-error max-w-sm p-2 transition-all transition-discrete ${toastStyle.toastPosition}`;
-    case toastType.info:
-      return `alert alert-info max-w-sm p-2 transition-all transition-discrete ${toastStyle.toastPosition}`;
-    case toastType.warning:
-      return `alert alert-warning max-w-sm p-2 transition-all transition-discrete ${toastStyle.toastPosition}`;
+    case eToastType.success:
+      return `alert alert-success max-w-sm p-2 transition-all transition-discrete ${toastStyle.toastPosition} z-50`;
+    case eToastType.error:
+      return `alert alert-error max-w-sm p-2 transition-all transition-discrete ${toastStyle.toastPosition} z-50`;
+    case eToastType.info:
+      return `alert alert-info max-w-sm p-2 transition-all transition-discrete ${toastStyle.toastPosition} z-50`;
+    case eToastType.warning:
+      return `alert alert-warning max-w-sm p-2 transition-all transition-discrete ${toastStyle.toastPosition} z-50`;
     default:
-      return `alert alert-success max-w-sm p-2 transition-all transition-discrete ${toastStyle.toastPosition}`;
+      return `alert alert-success max-w-sm p-2 transition-all transition-discrete ${toastStyle.toastPosition} z-50`;
   }
 }
 const Toast = (props: iToastProps) => {

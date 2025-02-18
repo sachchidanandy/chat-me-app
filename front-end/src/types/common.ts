@@ -19,4 +19,5 @@ export interface iSearchUser {
   profilePicUrl: string;
   username: string;
   isRequestSent: boolean;
+  isFriend: boolean;
 }

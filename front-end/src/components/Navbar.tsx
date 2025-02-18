@@ -2,6 +2,7 @@
 
 import { NavLink } from "react-router";
 import useAuth from "../hooks/useAuth"
+import Svg from "./Svg";
 
 // create a navigation bar
 const Navbar = () => {
@@ -14,8 +15,11 @@ const Navbar = () => {
         <NavLink className="btn btn-ghost text-xl" to="/">daisyUI</NavLink>
       </div>
       <div className="flex-none gap-2">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar" onClick={() => (document.getElementById('friend-request-modal') as HTMLDialogElement | null)?.showModal()}>
+          <Svg svgName="notification" />
+        </div>
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+          <div tabIndex={1} role="button" className="btn btn-ghost btn-circle avatar">
             <div className="w-10 rounded-full">
               <img
                 alt="profile-pic"
@@ -23,7 +27,7 @@ const Navbar = () => {
             </div>
           </div>
           <ul
-            tabIndex={0}
+            tabIndex={1}
             className="menu menu-sm dropdown-content bg-primary text-primary-content rounded-box z-[1] mt-3 w-52 p-2 shadow">
             <li>
               <NavLink className="justify-between" to="/profile">

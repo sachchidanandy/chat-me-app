@@ -10,6 +10,7 @@ import { sendErrorResponse } from '@utils/wrapper';
 import { INTERNAL_SERVER_ERROR, NOT_FOUND } from '@constants/statusCode';
 import { INT_SER_ERROR, URL_DO_NOT_EXIST } from '@constants/errorMessages';
 import { ErrorResponse } from '@utils/errorResponse';
+import { updateUsers } from '@controllers/user.controller';
 
 const app: Express = express();
 app.use(cors({

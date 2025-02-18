@@ -1,4 +1,4 @@
-enum LoaderTypes {
+export enum eLoaderTypes {
   RING = 'loading-ring',
   BALL = 'loading-ball',
   BARS = 'loading-bars',
@@ -8,11 +8,11 @@ enum LoaderTypes {
 }
 type LoaderPropsType = {
   size?: string,
-  type?: LoaderTypes,
+  type?: eLoaderTypes,
   color?: string,
 }
 const Loader = (props: LoaderPropsType) => {
-  const { size = 'w-44', type = LoaderTypes.RING, color = '' } = props;
+  const { size = 'w-44', type = eLoaderTypes.RING, color = '' } = props;
   return (
     <div className="w-full h-full flex justify-center items-center">
       <span className={`loading ${type} ${size} ${color}`} />

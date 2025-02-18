@@ -9,7 +9,7 @@ import {
   removePrivateKey,
   storePrivateKey
 } from "../utils/encryptionKeys";
-import Toast, { toastType } from "../components/toast/Toast";
+import Toast, { eToastType } from "../components/toast/Toast";
 import Loader from "../components/Loader";
 
 interface iAuthContext {
@@ -20,7 +20,7 @@ interface iAuthContext {
   signUp: (username: string, fullName: string, email: string, password: string) => Promise<void>;
   logoutLoading: boolean;
   logout: () => Promise<void>;
-  handleToastToogle: (message: string, type: toastType) => void;
+  handleToastToogle: (message: string, type?: eToastType) => void;
 }
 export const AuthContext = createContext<iAuthContext>({} as iAuthContext);
 
@@ -43,13 +43,13 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
 
   const [user, setUser] = useState<null | iUser>(null);
   const [showToast, setShowToast] = useState(false);
-  const [toastDetails, setToastDetails] = useState({ message: '', type: toastType.success });
+  const [toastDetails, setToastDetails] = useState({ message: '', type: eToastType.success });
   const { data: userData, loading: initialLoading, error: initialError } = useFetchImediate('/auth/user', { withCredentials: true });
   const { loading: loginLoading, request: loginUser } = useFetch('/auth/login');
   const { loading: signupLoading, request: signupUser } = useFetch('/auth/sign-up');
   const { loading: logoutLoading, request: logoutUser } = useFetch('/auth/logout');
 
-  const handleToastToogle = (message: string, type: toastType = toastType.success) => {
+  const handleToastToogle = (message: string, type: eToastType = eToastType.success) => {
     setToastDetails({ message, type });
     setShowToast(true);
   }
@@ -71,7 +71,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
         privateKey && storePrivateKey(privateKey);
         setUser({ ...user, pubKey: user.pubKey, priKey: privateKey } as unknown as iUser);
       } else if (error) {
-        handleToastToogle(error, toastType.error);
+        handleToastToogle(error, eToastType.error);
       }
     }
   };
@@ -99,7 +99,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
         storePrivateKey(privateKey);
         setUser({ ...user, pubKey: publicKey, priKey: privateKey } as unknown as iUser);
       } else if (error) {
-        handleToastToogle(error, toastType.error);
+        handleToastToogle(error, eToastType.error);
       }
     }
   };

@@ -10,6 +10,8 @@ import { iFriendsDetail } from "../contextProvider/FriendsProvider";
 import animationStyle from '../utils/animation.module.css';
 import { useSearchDebounce } from "../hooks/useFetch";
 import UserSearchList from "../components/searchUsersList/UserSearchList";
+import { iSearchUser } from "../types/common";
+import FriendRequestModal from "../components/FriendRequestModal";
 
 const Dashboard = () => {
   const { friendId } = useParams();
@@ -21,12 +23,28 @@ const Dashboard = () => {
     loading: globalSearchLoading,
     error: globalSearchError
   } = useSearchDebounce('/users/search', searchQuery);
+  const [globalSearchUsers, setGlobalSearchUsers] = useState<iSearchUser[] | null>(null);
   const debouncedSearchValue = useDebounce(searchQuery, 200);
 
   const handleBackButton = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     setSearchQuery('');
   }
+
+  const handleSendFriendRequest = (userId: string) => {
+    setGlobalSearchUsers(users => {
+      return users?.length ? users?.map(user => {
+        const { id } = user;
+        console.log(' ======= ', { isMatch: id === userId, id, userId })
+        if (id === userId) {
+          return { ...user, isRequestSent: true }
+        }
+        return user
+      }) : null
+    });
+  };
+
+  console.log(" ======== ", globalSearchUsers)
 
   useEffect(() => {
     const filteredFriends = debouncedSearchValue ? friends.filter(
@@ -40,6 +58,12 @@ const Dashboard = () => {
       setSelectedFriends(friendId);
     }
   }, [friendId]);
+
+  useEffect(() => {
+    if (globalSearchData?.users) {
+      setGlobalSearchUsers(globalSearchData.users as iSearchUser[]);
+    }
+  }, [globalSearchData]);
 
   return (
     <div className="flex w-full h-full">
@@ -63,7 +87,8 @@ const Dashboard = () => {
         </div>
         {debouncedSearchValue ? <UserSearchList
           friends={filterData}
-          globalSearchData={globalSearchData}
+          handleSendFriendRequest={handleSendFriendRequest}
+          searchUserList={globalSearchUsers}
           globalSearchLoading={globalSearchLoading}
           globalSearchError={globalSearchError}
         /> : <FriendsList
@@ -75,6 +100,7 @@ const Dashboard = () => {
       {
         (selectedFriends || true) && <ChatSection />
       }
+      <FriendRequestModal />
     </div>
   );
 };

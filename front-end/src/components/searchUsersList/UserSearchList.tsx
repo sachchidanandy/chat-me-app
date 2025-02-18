@@ -1,5 +1,4 @@
 import { iFriendsDetail } from "../../contextProvider/FriendsProvider";
-import { iResposseData } from "../../hooks/useFetch";
 import { iSearchUser } from "../../types/common";
 import FriendsCard from "../fiendsList/FriendsCard";
 import Loader from "../Loader";
@@ -7,14 +6,13 @@ import UsersCard from "./UsersCard";
 
 interface iUserSearchListProps {
   friends: iFriendsDetail[] | null;
-  globalSearchData: iResposseData | null;
+  searchUserList: iSearchUser[] | null;
   globalSearchLoading: boolean;
   globalSearchError: string | null;
+  handleSendFriendRequest: (userId: string) => void;
 }
 const UserSearchList = (props: iUserSearchListProps): JSX.Element => {
-  const { friends, globalSearchData, globalSearchError, globalSearchLoading } = props;
-
-  const searchUserList = globalSearchData?.users as iSearchUser[];
+  const { friends, searchUserList, globalSearchError, globalSearchLoading, handleSendFriendRequest } = props;
 
   return (
     <div className="flex flex-col w-full gap-1 overflow-scroll">
@@ -44,6 +42,7 @@ const UserSearchList = (props: iUserSearchListProps): JSX.Element => {
             <UsersCard
               key={user.id}
               user={user}
+              handleSendFriendRequest={handleSendFriendRequest}
             />
           ))
         }
