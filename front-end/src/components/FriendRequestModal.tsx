@@ -1,39 +1,34 @@
 import { useEffect, useState } from "react";
-import useFetch, { useFetchImediate } from "../hooks/useFetch"
+import useFetch from "../hooks/useFetch"
 import Loader, { eLoaderTypes } from "./Loader";
 import useAuth from "../hooks/useAuth";
-import Svg from "./Svg";
+import { iPendingRequestType } from "../contextProvider/FriendsProvider";
+import useFriends from "../hooks/useFriends";
 
-type pendingRequestType = {
-  requestId: string,
-  senderName: string,
-  senderProfilePic: string,
-  senderUsername: string,
-  sentAt: string,
-  responseStatus: string,
-};
-
+interface iPendingRequestState extends iPendingRequestType {
+  responseStatus: string;
+}
 type friendRequestResponse = {
-  pendingRequests: pendingRequestType[],
+  pendingRequests: iPendingRequestState[],
   message: string,
 };
 
 const FriendRequestModal = () => {
-  const { loading, data } = useFetchImediate('/friend/request');
   const { handleToastToogle } = useAuth();
+  const { friendRequests, friendRequestLoading } = useFriends();
   const { loading: actionLoading, request } = useFetch('/friend/request');
   const [friendRequest, setFriendRequest] = useState<friendRequestResponse>();
 
   useEffect(() => {
-    if (data?.pendingRequests) {
-      const formateRequestData = data?.pendingRequests.map((req: Partial<pendingRequestType>) => ({
+    if (friendRequests?.pendingRequests) {
+      const formateRequestData = friendRequests?.pendingRequests.map((req: iPendingRequestType) => ({
         ...req,
         sentAt: new Date(req.sentAt || '').toDateString().slice(4),
         responseStatus: ''
       }));
-      setFriendRequest({ message: data?.message, pendingRequests: formateRequestData });
+      setFriendRequest({ message: friendRequests?.message, pendingRequests: formateRequestData });
     }
-  }, [data]);
+  }, [friendRequests]);
 
   const handleRequest = (requestId: string, accepted = false) => (
     async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -59,8 +54,8 @@ const FriendRequestModal = () => {
     }
   );
 
-  const requestCard = (req: pendingRequestType) => {
-    const { requestId, senderName, senderProfilePic, senderUsername, sentAt, responseStatus } = req;
+  const requestCard = (req: iPendingRequestState) => {
+    const { requestId, senderName, senderProfilePic, senderUsername, responseStatus } = req;
 
     return (
       <div key={requestId} className="h-auto w-full flex gap-x-2 items-center justify-between flex-wrap">
@@ -95,7 +90,7 @@ const FriendRequestModal = () => {
         <form method="dialog">
           <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
         </form>
-        {loading || actionLoading ? <Loader type={eLoaderTypes.SPINNER} size="w-20" /> : (
+        {friendRequestLoading || actionLoading ? <Loader type={eLoaderTypes.SPINNER} size="w-20" /> : (
           <div className="flex flex-col gap-y-2 pt-1">
             {pendingRequests?.length === 0 && message ? <p className="text-center">{message}</p> : null}
             {

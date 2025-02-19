@@ -43,8 +43,9 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
 
   const [user, setUser] = useState<null | iUser>(null);
   const [showToast, setShowToast] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [toastDetails, setToastDetails] = useState({ message: '', type: eToastType.success });
-  const { data: userData, loading: initialLoading, error: initialError } = useFetchImediate('/auth/user', { withCredentials: true });
+  const { data: userData, error: initialError } = useFetchImediate('/auth/user', { withCredentials: true });
   const { loading: loginLoading, request: loginUser } = useFetch('/auth/login');
   const { loading: signupLoading, request: signupUser } = useFetch('/auth/sign-up');
   const { loading: logoutLoading, request: logoutUser } = useFetch('/auth/logout');
@@ -123,9 +124,11 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
       } else {
         logout();
       }
+      setInitialLoading(false);
     } else if (initialError) {
       setUser(null);
       removePrivateKey();
+      setInitialLoading(false);
     }
   }, [userData, initialError]);
 

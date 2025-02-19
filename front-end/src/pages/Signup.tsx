@@ -66,7 +66,7 @@ const Signup = (): JSX.Element => {
 
   return (
     <div className="p-3 text-white w-full max-w-md rounded-md bg-gray-600">
-      <img alt="Company Logo" src="public/images/application-logo.jpeg" className="h-[75px] mx-auto my-2 rounded-sm" />
+      <img alt="company-logo" src="public/images/application-logo.jpeg" className="h-[75px] mx-auto my-2 rounded-sm" />
       <h1 className="text-2xl  mb-2 text-center">Create Your Account</h1>
       <form onSubmit={handleSubmit} className="flex flex-col items-center">
         {

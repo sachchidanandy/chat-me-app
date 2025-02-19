@@ -6,6 +6,7 @@ import { getAlreadySendRequest, fetchPendingRequest, getIsAlreadyFriend } from "
 import { ErrorResponse } from "@utils/errorResponse";
 import { sendSuccessResponse } from "@utils/wrapper";
 import { Request, Response } from "express";
+import { Types } from "mongoose";
 
 
 export const getAllFriends = async (req: Request, res: Response) => {
@@ -13,29 +14,24 @@ export const getAllFriends = async (req: Request, res: Response) => {
 
   const friends = await Friends.aggregate([
     {
-      $match: { user_id: userId }
+      $match: { user_id: new Types.ObjectId(userId as string) }
     },
     {
       $lookup: {
-        from: 'User',
+        from: 'users',
         localField: 'friends_list',
         foreignField: '_id',
-        as: 'friendsDetail'
+        as: 'friendsDetails'
       }
     },
     {
       $project: {
         _id: 0,
-        friendsMap: {
-          $arrayToObject: {
-            $map: {
-              input: "$friendsDetail",
-              as: "friend",
-              in: {
-                k: { $toString: "$$friend._id" },
-                v: "$$friend.pub_key"
-              }
-            }
+        friendsDetail: {
+          $map: {
+            input: "$friendsDetails",
+            as: "friend",
+            in: [{ $toString: "$$friend._id" }, "$$friend.pub_key"]
           }
         }
       }
@@ -43,8 +39,8 @@ export const getAllFriends = async (req: Request, res: Response) => {
   ]);
 
   const message = friends.length ? 'Friends fetched' : 'No friends found';
-  const friendsObject = friends.length ? friends[0].friendsMap : {};
-  return sendSuccessResponse(res, { friends: friendsObject, message });
+  const friendsObject = friends.length ? friends[0]?.friendsDetail : [];
+  return sendSuccessResponse(res, { friendsKeyMap: friendsObject, message });
 };
 
 export const getAllFriendRequest = async (req: Request, res: Response) => {

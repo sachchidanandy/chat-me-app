@@ -13,6 +13,7 @@ export interface iMessagePayload {
   recipientId: string;
   encryptedMessage: iEncryptedMessage;
 }
+
 export interface iSearchUser {
   id: string;
   fullName: string;
@@ -21,3 +22,8 @@ export interface iSearchUser {
   isRequestSent: boolean;
   isFriend: boolean;
 }
+
+export interface iActionType<T> {
+  type: string;
+  payload: T;
+};

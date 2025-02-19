@@ -35,7 +35,6 @@ const Dashboard = () => {
     setGlobalSearchUsers(users => {
       return users?.length ? users?.map(user => {
         const { id } = user;
-        console.log(' ======= ', { isMatch: id === userId, id, userId })
         if (id === userId) {
           return { ...user, isRequestSent: true }
         }
@@ -43,8 +42,6 @@ const Dashboard = () => {
       }) : null
     });
   };
-
-  console.log(" ======== ", globalSearchUsers)
 
   useEffect(() => {
     const filteredFriends = debouncedSearchValue ? friends.filter(

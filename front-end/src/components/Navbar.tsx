@@ -3,20 +3,23 @@
 import { NavLink } from "react-router";
 import useAuth from "../hooks/useAuth"
 import Svg from "./Svg";
+import useFriends from "../hooks/useFriends";
 
 // create a navigation bar
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { friendRequests: { pendingRequests } } = useFriends();
   const { userId, profilePicUrl } = user || {};
 
   return userId ? (
     <nav className="navbar bg-primary text-primary-content">
       <div className="flex-1">
-        <NavLink className="btn btn-ghost text-xl" to="/">daisyUI</NavLink>
+        <NavLink className="btn btn-ghost text-xl" to="/">Chit Chat</NavLink>
       </div>
-      <div className="flex-none gap-2">
-        <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar" onClick={() => (document.getElementById('friend-request-modal') as HTMLDialogElement | null)?.showModal()}>
-          <Svg svgName="notification" />
+      <div className="flex-none gap-6">
+        <div tabIndex={0} role="button" className="indicator" onClick={() => (document.getElementById('friend-request-modal') as HTMLDialogElement | null)?.showModal()}>
+          <span className="indicator-item badge badge-secondary">{pendingRequests?.length || 0}</span>
+          <Svg svgName="notification" className="fill-none stroke-current pt-1" />
         </div>
         <div className="dropdown dropdown-end">
           <div tabIndex={1} role="button" className="btn btn-ghost btn-circle avatar">
