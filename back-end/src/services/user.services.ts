@@ -1,5 +1,5 @@
 import User from '@models/user.model';
-import { Schema, Types } from 'mongoose';
+import { Types } from 'mongoose';
 
 export const searchUsersByName = async (userId: string, searchQuery: string, offset: number, limit: number) => {
   const users = await User.aggregate([

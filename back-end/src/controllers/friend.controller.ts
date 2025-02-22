@@ -1,4 +1,4 @@
-import { ALREADY_A_FRIEND, ALREADY_SENT_REQUEST, NO_REQUEST_FOUND } from "@constants/errorMessages";
+import { ALREADY_A_FRIEND, ALREADY_SENT_REQUEST, NO_REQUEST_FOUND, NO_FRIEND_FOUND, SEARCH_QUERY_REQ } from "@constants/errorMessages";
 import { BAD_REQUEST, CREATED } from "@constants/statusCode";
 import FriendRequest, { eStatus } from "@models/friendRequest.model";
 import Friends from "@models/friends.model";
@@ -109,3 +109,56 @@ export const acknowledgeRequest = async (req: Request, res: Response) => {
 
   return sendSuccessResponse(res, { message: `Friend request ${updatedState} successfully!` });
 };
+
+export const fetchSpecificFriendDetail = async (req: Request, res: Response) => {
+  const { userId } = req.body;
+  const { id } = req.query;
+
+  if (!id) {
+    throw new ErrorResponse(SEARCH_QUERY_REQ, BAD_REQUEST);
+  }
+
+  const friendDetail = await Friends.aggregate([
+    {
+      $match: {
+        user_id: new Types.ObjectId(userId as string),
+        friends_list: new Types.ObjectId(id as string)
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'friends_list',
+        foreignField: '_id',
+        as: 'friendsDetails'
+      }
+    },
+    {
+      $unwind: '$friendsDetails'
+    },
+    {
+      $match: {
+        'friendsDetails._id': new Types.ObjectId(id as string)
+      }
+    },
+    {
+      $replaceRoot: {
+        newRoot: '$friendsDetails'
+      }
+    },
+    {
+      $project: {
+        id: '$_id',
+        name: '$full_name',
+        pubKey: '$pub_key',
+        profilePicUrl: '$profile_pic_url'
+      }
+    }
+  ]);
+
+  if (!friendDetail) {
+    throw new ErrorResponse(NO_FRIEND_FOUND, BAD_REQUEST);
+  }
+
+  return sendSuccessResponse(res, { friendDetail });
+}

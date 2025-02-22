@@ -4,6 +4,7 @@ import { useAuth } from "./AuthProvider";
 import { mockFriendsList } from "./mock";
 import Loader from "../components/Loader";
 import { iActionType } from "../types/common";
+import { getMessageEncryptionSecret, getPrivateKey } from "../utils/encryptionKeys";
 
 export interface iFriendsDetail {
   id: string;
@@ -33,7 +34,8 @@ export interface iFriendsContext {
   friendRequests: iFriendRequestResponse;
   friendRequestLoading: boolean;
   setSelectedFriends: (id: string) => void;
-  friendsPubKeyMap: Map<string, string> | null;
+  friendsMessageEncKeyMap: Map<string, string> | null;
+  fetchingFriendLoading: boolean;
 };
 
 const FriendsContext = createContext<iFriendsContext>({} as iFriendsContext);
@@ -47,7 +49,7 @@ interface iSetSelectedFriends extends iActionType<iFriendsDetail> {
 interface iSetFriendRequests extends iActionType<iFriendRequestResponse> {
   type: 'SET_FRIEND_REQUESTS';
 }
-interface iSetFriendsPubKeys extends iActionType<[string, string][]> {
+interface iSetFriendsPubKeys extends iActionType<Map<string, string>> {
   type: 'SET_FRIENDS_PUB_KEYS';
 }
 
@@ -56,7 +58,7 @@ type stateType = {
   chatList: iFriendsDetail[],
   selectedFriends: iFriendsDetail,
   friendRequests: iFriendRequestResponse,
-  friendsPubKeyMap: Map<string, string> | null,
+  friendsMessageEncKeyMap: Map<string, string> | null,
 }
 
 const friendsReducer = (state: stateType, action: friendsAction) => {
@@ -68,8 +70,7 @@ const friendsReducer = (state: stateType, action: friendsAction) => {
     case 'SET_FRIEND_REQUESTS':
       return { ...state, friendRequests: action.payload };
     case 'SET_FRIENDS_PUB_KEYS':
-      const friendsPubKeyMap = new Map<string, string>(action.payload);
-      return { ...state, friendsPubKeyMap };
+      return { ...state, friendsMessageEncKeyMap: action.payload };
     default:
       return state;
   }
@@ -83,23 +84,50 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
   const { user } = useAuth();
   const [state, dispatch] = useReducer(friendsReducer, {
     chatList: mockFriendsList,
-    selectedFriends: { id: '', name: '', pubKey: '', profilePicUrl: '' },
+    selectedFriends: {} as iFriendsDetail,
     friendRequests: {} as iFriendRequestResponse,
-    friendsPubKeyMap: null,
+    friendsMessageEncKeyMap: null,
   });
   const { loading, request: fetchFriendsKeyMap } = useFetch('/friend/all');
+  const { loading: fetchingFriendLoading, request: searchFriendDetails } = useFetch('/friend/details');
   const { loading: friendRequestLoading, request: getFriendRequest } = useFetch('/friend/request');
 
-  const handleSelectFriend = (id: string) => {
+  const handleSelectFriend = async (id: string) => {
     const selectedFriend = state.chatList.find((friend: iFriendsDetail) => friend.id === id);
     if (selectedFriend) {
       dispatch({ type: 'SET_SELECTED_FRIENDS', payload: selectedFriend });
+    } else {
+      const { data, error } = await searchFriendDetails({
+        params: {
+          id
+        },
+        method: 'GET',
+      });
+      if (data && !error) {
+        const friendsDetail = { ...data.friendDetail, lastMessage: '', lastChatTime: Date.now().toString() } as iFriendsDetail;
+        if (!state.friendsMessageEncKeyMap?.has(friendsDetail.id)) {
+          const newFriendsMessageEncKeyMap = new Map(state.friendsMessageEncKeyMap);
+          const usersPriKey = getPrivateKey();
+          newFriendsMessageEncKeyMap.set(friendsDetail.id, getMessageEncryptionSecret(friendsDetail.pubKey, usersPriKey!));
+          dispatch({ type: 'SET_FRIENDS_PUB_KEYS', payload: newFriendsMessageEncKeyMap });
+        }
+        dispatch({ type: 'SET_SELECTED_FRIENDS', payload: friendsDetail });
+        dispatch({ type: 'SET_CHAT_LIST', payload: [...state.chatList, friendsDetail] });
+      }
+      if (error) console.log(error);
     }
   };
 
   const fetchFriendsKeys = async () => {
     const { data, error } = await fetchFriendsKeyMap();
-    if (data) dispatch({ type: 'SET_FRIENDS_PUB_KEYS', payload: data.friendsKeyMap });
+    if (data) {
+      const friendsKeyMap = new Map();
+      const usersPriKey = getPrivateKey();
+      for (const [id, pubKey] of data.friendsKeyMap) {
+        friendsKeyMap.set(id, getMessageEncryptionSecret(pubKey, usersPriKey!));
+      }
+      dispatch({ type: 'SET_FRIENDS_PUB_KEYS', payload: friendsKeyMap });
+    }
     if (error) console.log(error);
   };
 
@@ -116,14 +144,15 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
     }
   }, [user]);
 
-  const { chatList, selectedFriends, friendRequests, friendsPubKeyMap } = state;
+  const { chatList, selectedFriends, friendRequests, friendsMessageEncKeyMap } = state;
   return (
     <FriendsContext.Provider value={{
-      friendsPubKeyMap,
+      friendsMessageEncKeyMap,
       friends: chatList,
       selectedFriends,
       friendRequests,
       friendRequestLoading,
+      fetchingFriendLoading,
       setSelectedFriends: handleSelectFriend
     }}>
       {loading ? <Loader /> : children}

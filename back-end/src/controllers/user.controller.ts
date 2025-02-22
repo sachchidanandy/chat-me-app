@@ -15,8 +15,8 @@ import { Request, Response } from 'express';
  */
 export const searchUsers = async (req: Request, res: Response): Promise<void> => {
   const { searchQuery } = req.params;
-  const page = parseInt(req.params?.page as string) || 1;
-  const limit = parseInt(req.params?.limit) || 10;
+  const page = parseInt(req.query?.page as string) || 1;
+  const limit = parseInt(req.query?.limit as string) || 10;
   const offset = (page - 1) * limit;
   const { userId } = req?.body;
 

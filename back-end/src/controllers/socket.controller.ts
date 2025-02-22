@@ -8,11 +8,11 @@ type MessageData = {
 };
 
 type SenderRecipient = {
-  userId: string;
-  receiverId: string;
+  senderId: string;
+  recipientId: string;
 };
 
-type SenderRecipientMessage = SenderRecipient & { message: MessageData };
+type SenderRecipientMessage = SenderRecipient & MessageData;
 
 const activeUsers = new Map<string, string>();
 
@@ -25,53 +25,58 @@ export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: 
     });
 
     // Indicate typing
-    socket.on('typing', ({ userId, receiverId }: SenderRecipient) => {
-      if (activeUsers.has(receiverId)) {
-        io.to(activeUsers.get(receiverId)!).emit('user_typing', { senderId: userId });
+    socket.on('typing', ({ senderId, recipientId }: SenderRecipient) => {
+      if (activeUsers.has(recipientId)) {
+        io.to(activeUsers.get(recipientId)!).emit('user_typing', { senderId });
       } else {
-        redisPub.publish('typing_channel', JSON.stringify({ userId, receiverId }));
+        redisPub.publish('typing_channel', JSON.stringify({ senderId, recipientId }));
       }
     });
 
     // Indicate stop typing
-    socket.on('stop_typing', ({ userId, receiverId }: SenderRecipient) => {
-      if (activeUsers.has(receiverId)) {
-        io.to(activeUsers.get(receiverId)!).emit('user_stop_typing', { senderId: userId });
+    socket.on('stop_typing', ({ senderId, recipientId }: SenderRecipient) => {
+      if (activeUsers.has(recipientId)) {
+        io.to(activeUsers.get(recipientId)!).emit('user_stop_typing', { senderId });
       } else {
-        redisPub.publish('stop_typing_channel', JSON.stringify({ userId, receiverId }));
+        redisPub.publish('stop_typing_channel', JSON.stringify({ senderId, recipientId }));
       }
     });
 
     // Send a message
-    socket.on('send_message', async ({ userId, receiverId, message }: SenderRecipientMessage) => {
+    socket.on('send_message', async ({ senderId, recipientId, cipherText, nonce }: SenderRecipientMessage) => {
       const newMessage = new Message(
         {
-          sender_id: userId,
-          recipient_id: receiverId,
-          cipher_text: message.cipherText,
-          nonce: message.nonce,
+          sender_id: senderId,
+          recipient_id: recipientId,
+          cipher_text: cipherText,
+          nonce: nonce,
           status: 'sent'
         }
       );
-      if (activeUsers.has(receiverId)) {
+      if (activeUsers.has(recipientId)) {
         newMessage.status = 'delivered';
-        io.to(activeUsers.get(receiverId)!).emit('new_message', {
-          message: { ...message, id: newMessage._id, status: newMessage.status },
-          senderId: userId
+        io.to(activeUsers.get(recipientId)!).emit('new_message', {
+          id: newMessage._id,
+          recipientId,
+          senderId,
+          cipherText,
+          nonce,
+          timestamp: newMessage.timestamp,
+          status: newMessage.status as MessageStatus,
         });
       } else {
-        redisPub.publish('chat_channel', JSON.stringify({ userId, receiverId, message }));
+        redisPub.publish('chat_channel', JSON.stringify({ senderId, recipientId, cipherText, nonce }));
       }
       await newMessage.save();
     });
 
     // Mark a message as read
-    socket.on('mark_as_read', async ({ userId, receiverId }: SenderRecipient) => {
+    socket.on('mark_as_read', async ({ senderId, recipientId }: SenderRecipient) => {
       await Message.updateMany(
-        { sender_id: receiverId, recipient_id: userId, status: 'delivered' },
+        { sender_id: recipientId, recipient_id: senderId, status: 'delivered' },
         { status: 'seen' }
       );
-      io.to(activeUsers.get(receiverId)!).emit('message_seen', { senderId: userId });
+      io.to(activeUsers.get(recipientId)!).emit('message_seen', { senderId });
     });
 
     // Unregister a user
@@ -90,27 +95,31 @@ export const handleRedisSubscription = (io: Server, redisSub: Redis) => {
   redisSub.on("message", async (channel, message) => {
     const messageData = JSON.parse(message);
     if (channel === 'chat_channel') {
-      const { userId, receiverId, message: msg } = messageData;
-      if (activeUsers.has(receiverId)) {
+      const { senderId, recipientId, ...msg } = messageData;
+      if (activeUsers.has(recipientId)) {
         const newMessage = await Message.findOneAndUpdate(
-          { sender_id: userId, recipient_id: receiverId, status: "sent" },
+          { sender_id: senderId, recipient_id: recipientId, status: "sent" },
           { status: "delivered" },
           { new: true }
         );
-        io.to(activeUsers.get(receiverId)!).emit('new_message', {
-          message: { ...msg, id: newMessage?._id, status: newMessage?.status },
-          senderId: userId
+        io.to(activeUsers.get(recipientId)!).emit('new_message', {
+          ...msg,
+          id: newMessage?._id,
+          status: newMessage?.status,
+          senderId,
+          recipientId,
+          timestamp: newMessage?.timestamp,
         });
       }
     } else if (channel === 'typing_channel') {
-      const { userId, receiverId } = messageData;
-      if (activeUsers.has(receiverId)) {
-        io.to(activeUsers.get(receiverId)!).emit('user_typing', { senderId: userId });
+      const { userId, recipientId } = messageData;
+      if (activeUsers.has(recipientId)) {
+        io.to(activeUsers.get(recipientId)!).emit('user_typing', { senderId: userId });
       }
     } else if (channel === 'stop_typing_channel') {
-      const { userId, receiverId } = messageData;
-      if (activeUsers.has(receiverId)) {
-        io.to(activeUsers.get(receiverId)!).emit('user_stop_typing', { senderId: userId });
+      const { userId, recipientId } = messageData;
+      if (activeUsers.has(recipientId)) {
+        io.to(activeUsers.get(recipientId)!).emit('user_stop_typing', { senderId: userId });
       }
     }
   });
