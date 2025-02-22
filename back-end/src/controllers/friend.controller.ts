@@ -148,6 +148,7 @@ export const fetchSpecificFriendDetail = async (req: Request, res: Response) => 
     },
     {
       $project: {
+        _id: 0,
         id: '$_id',
         name: '$full_name',
         pubKey: '$pub_key',

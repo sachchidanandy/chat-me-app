@@ -93,9 +93,11 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           const msg = decryptMessage({ cipherText, nonce }, friendsMessageEncKeyMap?.get(id) || '')!;
           return { id, senderId, recipientId, timestamp, status, msg } as iMessage;
         });
-        messagesMap.current.set(id, [...decodedMessages, ...messages]);
-        setMessages(messagesMap.current.get(id) || []);
+        messagesMap.current.set(id, [...messages, ...decodedMessages]);
+      } else {
+        messagesMap.current.set(id, [...messages]);
       }
+      setMessages(messagesMap.current.get(id) || []);
     }
     if (error) {
       console.log(error);

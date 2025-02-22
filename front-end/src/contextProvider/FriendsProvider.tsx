@@ -103,8 +103,9 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
         },
         method: 'GET',
       });
-      if (data && !error) {
-        const friendsDetail = { ...data.friendDetail, lastMessage: '', lastChatTime: Date.now().toString() } as iFriendsDetail;
+      if (data && !error && data.friendDetail.length) {
+        const friendsDetail = { ...data.friendDetail[0], lastMessage: '', lastChatTime: Date.now().toString() } as iFriendsDetail;
+
         if (!state.friendsMessageEncKeyMap?.has(friendsDetail.id)) {
           const newFriendsMessageEncKeyMap = new Map(state.friendsMessageEncKeyMap);
           const usersPriKey = getPrivateKey();
@@ -112,7 +113,7 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
           dispatch({ type: 'SET_FRIENDS_PUB_KEYS', payload: newFriendsMessageEncKeyMap });
         }
         dispatch({ type: 'SET_SELECTED_FRIENDS', payload: friendsDetail });
-        dispatch({ type: 'SET_CHAT_LIST', payload: [...state.chatList, friendsDetail] });
+        dispatch({ type: 'SET_CHAT_LIST', payload: [friendsDetail, ...state.chatList] });
       }
       if (error) console.log(error);
     }

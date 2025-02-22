@@ -38,14 +38,6 @@ export const mockFriendsList = [
     "profilePicUrl": "https://dummyjson.com/icon/zacharyl/128",
     "lastMessage": "",
     "lastChatTime": ""
-  },
-  {
-    "id": "67a60d49fc4ba6b33cdd1f5a",
-    "name": "sachin@gmail c",
-    "pubKey": "crz+/qjByWrFUx+421TcmJOpO1tcGPJmQwKDqHsDtEY=",
-    "profilePicUrl": "",
-    "lastMessage": "",
-    "lastChatTime": ""
   }
 ]
 
