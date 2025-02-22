@@ -1,8 +1,8 @@
-import { createContext, useEffect, useReducer } from "react";
+import { createContext, useContext, useEffect, useReducer } from "react";
 import useFetch from "../hooks/useFetch";
-import useAuth from "../hooks/useAuth";
+import { useAuth } from "./AuthProvider";
 import { mockFriendsList } from "./mock";
-import Loader, { eLoaderTypes } from "../components/Loader";
+import Loader from "../components/Loader";
 import { iActionType } from "../types/common";
 
 export interface iFriendsDetail {
@@ -36,7 +36,7 @@ export interface iFriendsContext {
   friendsPubKeyMap: Map<string, string> | null;
 };
 
-export const FriendsContext = createContext<iFriendsContext>({} as iFriendsContext);
+const FriendsContext = createContext<iFriendsContext>({} as iFriendsContext);
 
 interface iSetChatList extends iActionType<iFriendsDetail[]> {
   type: 'SET_CHAT_LIST';
@@ -130,5 +130,7 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
     </FriendsContext.Provider>
   );
 };
+
+export const useFriends = () => (useContext(FriendsContext));
 
 export default FriendsProvider;

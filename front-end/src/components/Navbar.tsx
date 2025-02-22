@@ -1,9 +1,9 @@
 
 
 import { NavLink } from "react-router";
-import useAuth from "../hooks/useAuth"
+import { useAuth } from "../contextProvider/AuthProvider";
 import Svg from "./Svg";
-import useFriends from "../hooks/useFriends";
+import { useFriends } from "../contextProvider/FriendsProvider";
 
 // create a navigation bar
 const Navbar = () => {

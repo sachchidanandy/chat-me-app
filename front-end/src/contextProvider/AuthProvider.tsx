@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import useFetch, { iResposseData, useFetchImediate } from "../hooks/useFetch";
 import {
@@ -11,6 +11,7 @@ import {
 } from "../utils/encryptionKeys";
 import Toast, { eToastType } from "../components/toast/Toast";
 import Loader from "../components/Loader";
+import socket from "../utils/socket";
 
 interface iAuthContext {
   user: null | iUser;
@@ -22,7 +23,7 @@ interface iAuthContext {
   logout: () => Promise<void>;
   handleToastToogle: (message: string, type?: eToastType) => void;
 }
-export const AuthContext = createContext<iAuthContext>({} as iAuthContext);
+const AuthContext = createContext<iAuthContext>({} as iAuthContext);
 
 interface iAuthContextProviderProps {
   children: React.ReactNode;
@@ -71,6 +72,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
         const privateKey = decryptPrivateKey(user.priKey, password);
         privateKey && storePrivateKey(privateKey);
         setUser({ ...user, pubKey: user.pubKey, priKey: privateKey } as unknown as iUser);
+        socket.emit('user_online', user?.userId);
       } else if (error) {
         handleToastToogle(error, eToastType.error);
       }
@@ -99,6 +101,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
         handleToastToogle(message);
         storePrivateKey(privateKey);
         setUser({ ...user, pubKey: publicKey, priKey: privateKey } as unknown as iUser);
+        socket.emit('user_online', user?.userId);
       } else if (error) {
         handleToastToogle(error, eToastType.error);
       }
@@ -113,6 +116,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
     } finally {
       setUser(null);
       removePrivateKey();
+      socket.emit('user_offline', userData?.user?.userId);
     }
   };
 
@@ -121,6 +125,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
       const privateKey = getPrivateKey();
       if (privateKey) {
         setUser({ ...userData.user, pubKey: userData.user.pubKey, priKey: getPrivateKey() } as unknown as iUser);
+        socket.emit('user_online', userData?.user?.userId);
       } else {
         logout();
       }
@@ -148,5 +153,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
     </AuthContext.Provider>
   )
 };
+
+export const useAuth = () => (useContext(AuthContext));
 
 export default AuthContextProvider;

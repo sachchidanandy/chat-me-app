@@ -55,7 +55,7 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 connectDB(() => {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`[server]: Server is running at http://localhost:${PORT}`);
   });
 });

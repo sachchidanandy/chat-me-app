@@ -3,7 +3,7 @@ import { iSearchUser } from "../../types/common";
 import animationStyle from '../../utils/animation.module.css';
 import useFetch from "../../hooks/useFetch";
 import Loader, { eLoaderTypes } from "../Loader";
-import useAuth from "../../hooks/useAuth";
+import { useAuth } from "../../contextProvider/AuthProvider";
 import { eToastType } from "../toast/Toast";
 
 interface iUsersCardProps {

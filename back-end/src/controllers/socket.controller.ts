@@ -18,7 +18,6 @@ const activeUsers = new Map<string, string>();
 
 export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: Redis) => {
   io.on('connection', (socket) => {
-    console.log(" ====== USER REGISTERED ======= ", socket);
     // Register a new user
     socket.on('user_online', (userId: string) => {
       activeUsers.set(userId, socket.id);

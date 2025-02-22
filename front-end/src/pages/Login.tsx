@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import InputElement from "../components/InputElement";
 import { Link, useNavigate } from "react-router";
 import { loginForm } from "../utils/formElements";
-import useAuth from "../hooks/useAuth";
+import { useAuth } from "../contextProvider/AuthProvider";
 
 const Login = (): JSX.Element => {
   const navigate = useNavigate();

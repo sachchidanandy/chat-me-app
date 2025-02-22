@@ -1,4 +1,4 @@
-import useFriends from "../../hooks/useFriends";
+import { useFriends } from "../../contextProvider/FriendsProvider";
 import Svg from "../Svg";
 
 const ChatHeader = () => {
@@ -17,7 +17,7 @@ const ChatHeader = () => {
           <Svg className="fill-none stroke-current" viewBox="0 0 24 24" svgName="videoCall" />
         </button>
         <button className="btn btn-ghost btn-circle" id="search-message-button">
-          <Svg viewBox="0 0 24 24" svgName="search" />
+          <Svg svgName="search" className="size-6" />
         </button>
 
       </div>

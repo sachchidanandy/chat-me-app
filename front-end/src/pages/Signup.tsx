@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import InputElement from "../components/InputElement";
 import { Link, useNavigate } from "react-router";
 import { signupForm } from "../utils/formElements";
-import useAuth from "../hooks/useAuth";
+import { useAuth } from "../contextProvider/AuthProvider";
 
 const Signup = (): JSX.Element => {
   const navigate = useNavigate();

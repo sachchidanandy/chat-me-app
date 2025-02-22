@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import useFetch from "../hooks/useFetch"
 import Loader, { eLoaderTypes } from "./Loader";
-import useAuth from "../hooks/useAuth";
+import { useAuth } from "../contextProvider/AuthProvider";
 import { iPendingRequestType } from "../contextProvider/FriendsProvider";
-import useFriends from "../hooks/useFriends";
+import { useFriends } from "../contextProvider/FriendsProvider";
 
 interface iPendingRequestState extends iPendingRequestType {
   responseStatus: string;

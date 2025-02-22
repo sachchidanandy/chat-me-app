@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 
-import useFriends from "../hooks/useFriends";
+import { useFriends } from "../contextProvider/FriendsProvider";
 import useDebounce from "../hooks/useDebounce";
 import Svg from "../components/Svg";
 import FriendsList from "../components/fiendsList/FriendsList";
@@ -12,6 +12,7 @@ import { useSearchDebounce } from "../hooks/useFetch";
 import UserSearchList from "../components/searchUsersList/UserSearchList";
 import { iSearchUser } from "../types/common";
 import FriendRequestModal from "../components/FriendRequestModal";
+import NoChats from "../components/NoChats";
 
 const Dashboard = () => {
   const { friendId } = useParams();
@@ -95,7 +96,7 @@ const Dashboard = () => {
         }
       </div>
       {
-        (selectedFriends || true) && <ChatSection />
+        (selectedFriends && selectedFriends.id) ? <ChatSection /> : <NoChats message="Please select a friend" />
       }
       <FriendRequestModal />
     </div>
