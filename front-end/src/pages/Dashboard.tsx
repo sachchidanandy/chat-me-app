@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 
 import { useFriends } from "../contextProvider/FriendsProvider";
-import useDebounce from "../hooks/useDebounce";
+import useDebounceValue from "../hooks/useDebounceValue";
 import Svg from "../components/Svg";
 import FriendsList from "../components/fiendsList/FriendsList";
 import ChatSection from "../components/chatSection/ChatSection";
 import { iFriendsDetail } from "../contextProvider/FriendsProvider";
-import animationStyle from '../utils/animation.module.css';
+import AnimationStyle from '../utils/animation.module.css';
 import { useSearchDebounce } from "../hooks/useFetch";
 import UserSearchList from "../components/searchUsersList/UserSearchList";
 import { iSearchUser } from "../types/common";
@@ -25,7 +25,7 @@ const Dashboard = () => {
     error: globalSearchError
   } = useSearchDebounce('/users/search', searchQuery);
   const [globalSearchUsers, setGlobalSearchUsers] = useState<iSearchUser[] | null>(null);
-  const debouncedSearchValue = useDebounce(searchQuery, 200);
+  const debouncedSearchValue = useDebounceValue(searchQuery, 200);
 
   const handleBackButton = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -68,7 +68,7 @@ const Dashboard = () => {
       <div className="flex flex-col md:max-w-sm max-w-screen-sm w-full h-full border-r pr-1">
         <div className="px-2 py-2 flex justify-between items-center gap-4">
           {filterData && (
-            <button onClick={handleBackButton} className={`btn btn-circle btn-ghost ${animationStyle.fadeIn}`}>
+            <button onClick={handleBackButton} className={`btn btn-circle btn-ghost ${AnimationStyle.fadeIn}`}>
               <Svg svgName="backArrow" className="text-primary" />
             </button>
           )}

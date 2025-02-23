@@ -1,16 +1,27 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import data from '@emoji-mart/data'
 import EmojiPicker from '@emoji-mart/react'
 
 import Svg from "../Svg";
+import { useChat } from "../../contextProvider/ChatProvider";
 
 const ChatFooter = () => {
+  const { sendMessage } = useChat();
   const [message, setMessage] = useState('');
   const [showPicker, setShowPicker] = useState(false);
 
   const handleEmojiClick = (emoji: any) => {
     setMessage(prevMessage => prevMessage + emoji.native);
-  }
+  };
+
+  const handleSendMessage = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (message.trim() !== '') {
+      sendMessage(message.trim());
+    }
+    setMessage('');
+  };
+
   return (
     <div className="flex items-center gap-2 px-4 py-2 justify-center relative">
       <label className="input input-bordered flex items-center gap-2 max-w-4xl w-full bg-primary-content text-white h-14">
@@ -33,11 +44,11 @@ const ChatFooter = () => {
       )}
 
       {message ? (
-        <button className="btn btn-circle btn-primary">
+        <button className="btn btn-circle btn-primary" onClick={handleSendMessage}>
           <Svg svgName="send-message" className="ml-2" />
         </button>
       ) : (
-        <button className="btn btn-circle btn-ghost">
+        <button className="btn btn-circle btn-ghost text-white">
           <Svg svgName="send-voice-message" />
         </button>
       )}

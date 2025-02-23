@@ -24,7 +24,7 @@ export interface iChatContext {
   sendMessage: (messages: string) => void;
   typing: boolean;
   loadingMessages: boolean;
-  fetchMessages: (page?: number, limit?: number) => void;
+  fetchMessages: (limit?: number) => void;
 };
 
 const ChatContext = createContext({} as iChatContext);
@@ -32,6 +32,7 @@ const ChatContext = createContext({} as iChatContext);
 const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const { selectedFriends: { id }, friendsMessageEncKeyMap } = useFriends();
   const { user } = useAuth();
+  const [page, setPage] = useState(1);
   const messagesMap = useRef<Map<string, iMessage[]>>(new Map());
   const [messages, setMessages] = useState<iMessage[]>([]);
   const [typing, setTyping] = useState(false);
@@ -68,7 +69,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       id: Date.now().toString(),
       senderId,
       recipientId,
-      timestamp,
+      timestamp: new Date(timestamp),
       status,
       msg: decryptMessage({ cipherText, nonce }, friendsMessageEncKeyMap?.get(id) || '')!,
     };
@@ -78,7 +79,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     setMessages((prevMessages) => [...prevMessages, message]);
   };
 
-  const fetchMessages = async (page: number = 1, limit: number = 50) => {
+  const fetchMessages = async (limit: number = 50) => {
     const { data, error } = await getMessages({
       params: {
         page,
@@ -93,11 +94,12 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           const msg = decryptMessage({ cipherText, nonce }, friendsMessageEncKeyMap?.get(id) || '')!;
           return { id, senderId, recipientId, timestamp, status, msg } as iMessage;
         });
-        messagesMap.current.set(id, [...messages, ...decodedMessages]);
+        messagesMap.current.set(id, [...decodedMessages]);
       } else {
-        messagesMap.current.set(id, [...messages]);
+        messagesMap.current.set(id, []);
       }
       setMessages(messagesMap.current.get(id) || []);
+      setPage(page + 1);
     }
     if (error) {
       console.log(error);
@@ -111,6 +113,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         fetchMessages();
       }
+      setPage(1);
     }
   }, [id, user]);
 
