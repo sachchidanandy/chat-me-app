@@ -1,8 +1,7 @@
-import { useCallback, useRef } from "react";
-import { FixedSizeList as List, ListChildComponentProps } from "react-window";
+import { useRef } from "react";
 
 import Message from "./Message";
-import { useChat } from "../../contextProvider/ChatProvider";
+import { iMessage, useChat } from "../../contextProvider/ChatProvider";
 import useDebounceCall from "../../hooks/useDebounceCall";
 
 const MessagesList = () => {
@@ -10,33 +9,20 @@ const MessagesList = () => {
   const [trigger, setTrigger] = useDebounceCall(fetchMessages, 300);
   const listRef = useRef(null);
 
-  const Row = ({ index, style }: ListChildComponentProps) => {
-    const message = messages[index];
-
-    return (
-      <Message style={style} message={message} />
-    );
-  };
-
-  const handleScroll = useCallback(({ scrollOffset }: { scrollOffset: number }) => {
+  const handleScroll = (e: React.MouseEvent<HTMLDivElement>) => {
+    const scrollOffset = e.currentTarget.scrollTop;
+    console.log(scrollOffset);
     if (scrollOffset < 50 && !loadingMessages) {
       !trigger && setTrigger(true);
     }
-  }, []);
+  };
 
   return (
-    <div className="w-full overflow-scroll mx-auto h-[80%] flex justify-center">
+    <div className="w-full overflow-scroll mx-auto h-[80%] flex justify-center" onScroll={handleScroll} ref={listRef}>
       <div className="max-w-5xl w-full">
-        <List
-          ref={listRef}
-          height={500} // Set viewport height
-          itemCount={messages.length}
-          itemSize={50} // Approximate message height
-          width="100%"
-          onScroll={handleScroll}
-        >
-          {Row}
-        </List>
+        {
+          messages?.map((message: iMessage) => (<Message key={message.id} message={message} />))
+        }
       </div>
     </div>
   )

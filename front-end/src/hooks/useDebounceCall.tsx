@@ -12,7 +12,7 @@ const useDebounceCall = (callback: () => void, delay: number = 300): [boolean, (
 
       return () => clearTimeout(intervalId);
     }
-  }, [callback, delay]);
+  }, [callback, delay, trigger]);
 
   return [trigger, setTrigger];
 };

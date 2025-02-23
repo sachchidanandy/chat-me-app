@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useFriends } from "./FriendsProvider";
 import { useAuth } from "./AuthProvider";
 import { decryptMessage, encryptMessage } from "../utils/messages";
@@ -62,11 +62,11 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     setMessages((prevMessages) => [...prevMessages, message]);
   };
 
-  const handleRecieveMessages = (messagePayload: iMessagePayload) => {
-    const { senderId, recipientId, timestamp, status, cipherText, nonce } = messagePayload;
+  const handleRecieveMessages = useCallback((messagePayload: iMessagePayload) => {
+    const { senderId, recipientId, timestamp, status, cipherText, nonce, id: messageId } = messagePayload;
     // Decrypt cipherText
     const message: iMessage = {
-      id: Date.now().toString(),
+      id: messageId,
       senderId,
       recipientId,
       timestamp: new Date(timestamp),
@@ -77,7 +77,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     socket.emit('mark_as_read', { senderId: user?.userId || '', recipientId: id });
     messagesMap.current.set(id, [...messagesMap.current.get(id) || [], message]);
     setMessages((prevMessages) => [...prevMessages, message]);
-  };
+  }, [id, user?.userId, friendsMessageEncKeyMap]);
 
   const fetchMessages = async (limit: number = 50) => {
     const { data, error } = await getMessages({
@@ -88,15 +88,14 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     });
     if (data) {
       const { messages: fetchedMessages } = data;
-      if (fetchedMessages.length) {
+      if (fetchedMessages) {
         const decodedMessages = fetchedMessages.map((message: iMessagePayload) => {
-          const { id, senderId, recipientId, timestamp, status, cipherText, nonce } = message;
+          const { id: messageId, senderId, recipientId, timestamp, status, cipherText, nonce } = message;
           const msg = decryptMessage({ cipherText, nonce }, friendsMessageEncKeyMap?.get(id) || '')!;
-          return { id, senderId, recipientId, timestamp, status, msg } as iMessage;
+          return { id: messageId, senderId, recipientId, timestamp, status, msg } as iMessage;
         });
-        messagesMap.current.set(id, [...decodedMessages]);
-      } else {
-        messagesMap.current.set(id, []);
+
+        messagesMap.current.set(id, [...(messagesMap.current.get(id) || []), ...decodedMessages]);
       }
       setMessages(messagesMap.current.get(id) || []);
       setPage(page + 1);
@@ -121,12 +120,12 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     socket.on('new_message', handleRecieveMessages);
     socket.on('user_typing', () => setTyping(true));
     socket.on('user_stop_typing', () => setTyping(false));
-    () => {
+    return () => {
       socket.off('new_message');
       socket.off('user_typing');
       socket.off('user_stop_typing');
     }
-  }, []);
+  }, [handleRecieveMessages]);
 
   return (
     <ChatContext.Provider

@@ -5,7 +5,7 @@ import AnimationStyles from '../../utils/animation.module.css'
 
 type MessagePropsType = {
   message: iMessage;
-  style: CSSProperties
+  style?: CSSProperties
 }
 const Message = memo(({ style, message }: MessagePropsType) => {
   const { msg, timestamp, senderId } = message;

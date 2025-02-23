@@ -14,7 +14,8 @@ const ChatFooter = () => {
     setMessage(prevMessage => prevMessage + emoji.native);
   };
 
-  const handleSendMessage = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSendMessage = (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     if (message.trim() !== '') {
       sendMessage(message.trim());
@@ -26,7 +27,9 @@ const ChatFooter = () => {
     <div className="flex items-center gap-2 px-4 py-2 justify-center relative">
       <label className="input input-bordered flex items-center gap-2 max-w-4xl w-full bg-primary-content text-white h-14">
         <button className="btn btn-circle btn-ghost" onClick={() => setShowPicker(prev => !prev)}><Svg svgName="emoji" /></button>
-        <input type="text" className="grow w-full text-lg" placeholder="Message..." value={message} onChange={(e) => setMessage(e.target.value)} />
+        <form className="w-full" onSubmit={handleSendMessage}>
+          <input type="text" className="grow w-full text-lg" placeholder="Message..." value={message} onChange={(e) => setMessage(e.target.value)} />
+        </form>
         <button className="btn btn-circle btn-ghost"><Svg svgName="attachment-button" /></button>
       </label>
 
