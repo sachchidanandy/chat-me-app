@@ -18,7 +18,7 @@ const UsersCardProps = ({ user, handleSendFriendRequest }: iUsersCardProps) => {
 
   const handleRequest = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    console.log(" =======  HERE =======", id);
+
     const { error, data } = await sendFriendRequest({
       method: 'POST',
       data: {

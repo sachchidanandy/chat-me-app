@@ -20,11 +20,12 @@ export interface iMessagePayload extends Omit<iMessage, 'msg'> {
 }
 
 export interface iChatContext {
-  messages: iMessage[];
-  sendMessage: (messages: string) => void;
   typing: boolean;
   loadingMessages: boolean;
+  hasMore: boolean;
+  messages: iMessage[];
   fetchMessages: (limit?: number) => void;
+  sendMessage: (messages: string) => void;
 };
 
 const ChatContext = createContext({} as iChatContext);
@@ -32,7 +33,8 @@ const ChatContext = createContext({} as iChatContext);
 const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const { selectedFriends: { id }, friendsMessageEncKeyMap } = useFriends();
   const { user } = useAuth();
-  const [page, setPage] = useState(1);
+  const pageMap = useRef<Map<string, number>>(new Map());
+  const [hasMore, setHasMore] = useState(false);
   const messagesMap = useRef<Map<string, iMessage[]>>(new Map());
   const [messages, setMessages] = useState<iMessage[]>([]);
   const [typing, setTyping] = useState(false);
@@ -80,25 +82,33 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   }, [id, user?.userId, friendsMessageEncKeyMap]);
 
   const fetchMessages = async (limit: number = 50) => {
+    const page = pageMap.current.get(id) || 1;
     const { data, error } = await getMessages({
       params: {
-        page,
+        page: page,
         limit
       }
     });
     if (data) {
       const { messages: fetchedMessages } = data;
       if (fetchedMessages) {
-        const decodedMessages = fetchedMessages.map((message: iMessagePayload) => {
-          const { id: messageId, senderId, recipientId, timestamp, status, cipherText, nonce } = message;
+        const reverseMessages = fetchedMessages.slice().reverse();
+        const decodedMessages = reverseMessages.map((message: iMessagePayload) => {
+          const { id: messageId, timestamp, cipherText, nonce, ...rest } = message;
           const msg = decryptMessage({ cipherText, nonce }, friendsMessageEncKeyMap?.get(id) || '')!;
-          return { id: messageId, senderId, recipientId, timestamp, status, msg } as iMessage;
+          return { id: messageId, timestamp: new Date(timestamp), msg, ...rest } as iMessage;
         });
 
-        messagesMap.current.set(id, [...(messagesMap.current.get(id) || []), ...decodedMessages]);
+        messagesMap.current.set(id, [...decodedMessages, ...(messagesMap.current.get(id) || [])]);
       }
+
       setMessages(messagesMap.current.get(id) || []);
-      setPage(page + 1);
+      pageMap.current.set(id, page + 1);
+      if (page === 1) {
+        setTimeout(() => setHasMore(fetchedMessages.length === limit), 500);
+      } else {
+        setHasMore(fetchedMessages.length === limit);
+      }
     }
     if (error) {
       console.log(error);
@@ -110,9 +120,9 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       if (messagesMap.current.has(id)) {
         setMessages(messagesMap.current.get(id) || []);
       } else {
+        pageMap.current.set(id, 1);
         fetchMessages();
       }
-      setPage(1);
     }
   }, [id, user]);
 
@@ -129,7 +139,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <ChatContext.Provider
-      value={{ messages, sendMessage, typing, loadingMessages, fetchMessages }}
+      value={{ messages, sendMessage, typing, loadingMessages, fetchMessages, hasMore }}
     >
       {children}
     </ChatContext.Provider>

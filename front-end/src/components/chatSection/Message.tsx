@@ -20,10 +20,10 @@ const Message = memo(({ style, message }: MessagePropsType) => {
   });
 
   const { chatContainerClass, messageClass } = senderId === userId ? {
-    chatContainerClass: `chat chat-end ${AnimationStyles.slideInRight}`,
+    chatContainerClass: `chat chat-end ${AnimationStyles.slideInRightMessage}`,
     messageClass: 'chat-bubble chat-bubble-secondary'
   } : {
-    chatContainerClass: `chat chat-start ${AnimationStyles.slideInLeft}`,
+    chatContainerClass: `chat chat-start ${AnimationStyles.slideInLeftMessage}`,
     messageClass: 'chat-bubble chat-bubble-primary'
   };
 

@@ -8,8 +8,9 @@ import { useFriends } from "../contextProvider/FriendsProvider";
 // create a navigation bar
 const Navbar = () => {
   const { user, logout } = useAuth();
-  const { friendRequests: { pendingRequests } } = useFriends();
+  const { friendRequests } = useFriends();
   const { userId, profilePicUrl } = user || {};
+  const pendingRequests = friendRequests?.pendingRequests;
 
   return userId ? (
     <nav className="navbar bg-primary text-primary-content">
