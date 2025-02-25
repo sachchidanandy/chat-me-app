@@ -1,13 +1,18 @@
 import { useChat } from "../../contextProvider/ChatProvider";
 import { useFriends } from "../../contextProvider/FriendsProvider";
 import Svg from "../Svg";
+import AnimationStyle from "../../utils/animation.module.css";
+import { iChatSectionProps } from "./ChatSection";
 
-const ChatHeader = () => {
+const ChatHeader = ({ isMobile, setShowMessageSection }: iChatSectionProps) => {
   const { typing } = useChat();
   const { selectedFriends: { name, profilePicUrl } } = useFriends();
   return (
     <div className="px-2 py-1 flex justify-between items-center text-base-content border-b">
       <div className="flex items-center gap-2">
+        {isMobile && <button onClick={() => setShowMessageSection(false)} className={`btn btn-circle btn-ghost ${AnimationStyle.fadeIn}`}>
+          <Svg svgName="backArrow" className="text-primary" />
+        </button>}
         <img className="size-14 rounded-full" src={profilePicUrl} alt={`${name}-profile-pic`} />
         <div className="flex flex-col">
           <span className="text-lg font-semibold">

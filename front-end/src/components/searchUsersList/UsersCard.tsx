@@ -68,7 +68,7 @@ const UsersCardProps = ({ user, handleSendFriendRequest }: iUsersCardProps) => {
   }
 
   return (
-    <div className={`${animationStyle.fadeIn} card card-side h-16 px-1 max-w-sm text-base-content btn-ghost`}>
+    <div className={`${animationStyle.fadeIn} card card-side h-16 px-1 md:max-w-sm max-w-screen-sm text-base-content btn-ghost`}>
       <figure>
         <img
           src={profilePicUrl}
