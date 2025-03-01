@@ -2,6 +2,7 @@ import { CSSProperties, memo } from "react";
 import { useAuth } from "../../contextProvider/AuthProvider"
 import { iMessage } from "../../contextProvider/ChatProvider";
 import AnimationStyles from '../../utils/animation.module.css'
+import { getRedableTimeStamp } from "../../utils/helpers";
 
 type MessagePropsType = {
   message: iMessage;
@@ -11,13 +12,6 @@ const Message = memo(({ style, message }: MessagePropsType) => {
   const { msg, timestamp, senderId } = message;
   const { user } = useAuth();
   const userId = user?.userId;
-
-  // get time in hh:mm pm/am formate
-  const time = timestamp.toLocaleString('en-US', {
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: true
-  });
 
   const { chatContainerClass, messageClass } = senderId === userId ? {
     chatContainerClass: `chat chat-end ${AnimationStyles.slideInRightMessage}`,
@@ -31,7 +25,7 @@ const Message = memo(({ style, message }: MessagePropsType) => {
     <div className={chatContainerClass} style={style}>
       <div className={messageClass}>
         {msg}
-        <span className="ml-3 text-xs relative top-3">{time}</span>
+        <span className="ml-3 text-xs relative top-3">{getRedableTimeStamp(timestamp)}</span>
       </div>
     </div>
   )

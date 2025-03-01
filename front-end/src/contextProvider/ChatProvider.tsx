@@ -10,7 +10,7 @@ export interface iMessage {
   msg: string;
   senderId: string;
   recipientId: string;
-  timestamp: Date;
+  timestamp: string;
   status: string;
 };
 
@@ -48,7 +48,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       msg: messages,
       senderId: user?.userId || '',
       recipientId: id,
-      timestamp: new Date(),
+      timestamp: new Date().toString(),
       status: 'sent',
     };
 
@@ -71,7 +71,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       id: messageId,
       senderId,
       recipientId,
-      timestamp: new Date(timestamp),
+      timestamp,
       status,
       msg: decryptMessage({ cipherText, nonce }, friendsMessageEncKeyMap?.get(id) || '')!,
     };
@@ -94,9 +94,9 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       if (fetchedMessages) {
         const reverseMessages = fetchedMessages.slice().reverse();
         const decodedMessages = reverseMessages.map((message: iMessagePayload) => {
-          const { id: messageId, timestamp, cipherText, nonce, ...rest } = message;
+          const { id: messageId, cipherText, nonce, ...rest } = message;
           const msg = decryptMessage({ cipherText, nonce }, friendsMessageEncKeyMap?.get(id) || '')!;
-          return { id: messageId, timestamp: new Date(timestamp), msg, ...rest } as iMessage;
+          return { id: messageId, msg, ...rest } as iMessage;
         });
 
         messagesMap.current.set(id, [...decodedMessages, ...(messagesMap.current.get(id) || [])]);

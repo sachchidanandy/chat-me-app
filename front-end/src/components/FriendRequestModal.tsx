@@ -4,6 +4,7 @@ import Loader, { eLoaderTypes } from "./Loader";
 import { useAuth } from "../contextProvider/AuthProvider";
 import { iPendingRequestType } from "../contextProvider/FriendsProvider";
 import { useFriends } from "../contextProvider/FriendsProvider";
+import { getRedableTimeStamp } from "../utils/helpers";
 
 interface iPendingRequestState extends iPendingRequestType {
   responseStatus: string;
@@ -23,7 +24,7 @@ const FriendRequestModal = () => {
     if (friendRequests?.pendingRequests) {
       const formateRequestData = friendRequests?.pendingRequests.map((req: iPendingRequestType) => ({
         ...req,
-        sentAt: new Date(req.sentAt || '').toDateString().slice(4),
+        sentAt: getRedableTimeStamp(req.sentAt || ''),
         responseStatus: ''
       }));
       setFriendRequest({ message: friendRequests?.message, pendingRequests: formateRequestData });

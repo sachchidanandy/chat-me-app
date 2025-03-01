@@ -1,8 +1,8 @@
-import { iFriendsDetail } from "../../contextProvider/FriendsProvider";
+import { iChatListFriends } from "../../contextProvider/FriendsProvider";
 import FriendsCard from "./FriendsCard";
 
 interface iFriendsListProps {
-  friends: iFriendsDetail[];
+  friends: iChatListFriends[];
   selectedFriendId?: string;
   handleViewChat: (e: React.MouseEvent<HTMLDivElement>) => void
 }
@@ -11,7 +11,7 @@ const FriedsList = (props: iFriendsListProps): JSX.Element => {
 
   return (
     <div className="flex flex-col w-full gap-1 overflow-scroll" onClick={handleViewChat}>
-      {friends.map((friend: iFriendsDetail) => (
+      {friends.map((friend: iChatListFriends) => (
         <FriendsCard
           key={friend.id}
           friend={friend}

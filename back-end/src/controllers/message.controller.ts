@@ -1,6 +1,6 @@
 import { SEARCH_QUERY_REQ } from "@constants/errorMessages";
 import { BAD_REQUEST } from "@constants/statusCode";
-import { fetchUserMessages } from "@services/message.services";
+import { fetchUserChatList, fetchUserMessages } from "@services/message.services";
 import { ErrorResponse } from "@utils/errorResponse";
 import { sendSuccessResponse } from "@utils/wrapper";
 import { Request, Response } from "express";
@@ -18,4 +18,10 @@ export const fetchMessages = async (req: Request, res: Response) => {
 
   const messages = await fetchUserMessages(userId, friendsId, offset, limit);
   return sendSuccessResponse(res, { messages });
+};
+
+export const fetchChatList = async (req: Request, res: Response) => {
+  const { userId } = req?.body;
+  const chatList = await fetchUserChatList(userId);
+  return sendSuccessResponse(res, { chatList });
 };

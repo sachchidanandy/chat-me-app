@@ -12,10 +12,11 @@ import { useSearchDebounce } from "../hooks/useFetch";
 import UserSearchList from "../components/searchUsersList/UserSearchList";
 import { iSearchUser } from "../types/common";
 import FriendRequestModal from "../components/FriendRequestModal";
+import SkeletonFriendListLoader from "../components/SkeletonFriendListLoader";
 
 const Dashboard = () => {
   const { friendId } = useParams();
-  const { friends, selectedFriends, setSelectedFriends } = useFriends();
+  const { friends, selectedFriends, chatListLoading, setSelectedFriends } = useFriends();
   const [filterData, setFilterData] = useState<iFriendsDetail[] | null>(null)
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
@@ -116,7 +117,7 @@ const Dashboard = () => {
                 <Svg svgName="search" />
               </label>
             </div>
-            {
+            {chatListLoading ? <SkeletonFriendListLoader /> : (
               debouncedSearchValue ? <UserSearchList
                 friends={filterData}
                 handleSendFriendRequest={handleSendFriendRequest}
@@ -127,7 +128,7 @@ const Dashboard = () => {
                 friends={friends}
                 selectedFriendId={selectedFriends?.id}
                 handleViewChat={handleViewChat}
-              />
+              />)
             }
           </div>
         )

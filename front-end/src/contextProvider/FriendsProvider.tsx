@@ -1,19 +1,30 @@
 import { createContext, useContext, useEffect, useReducer } from "react";
 import useFetch from "../hooks/useFetch";
 import { useAuth } from "./AuthProvider";
-import { mockFriendsList } from "./mock";
 import Loader from "../components/Loader";
 import { iActionType } from "../types/common";
 import { getMessageEncryptionSecret, getPrivateKey } from "../utils/encryptionKeys";
+import { decryptMessage } from "../utils/messages";
 
 export interface iFriendsDetail {
   id: string;
   name: string;
   pubKey: string;
   profilePicUrl: string;
-  lastMessage?: string;
-  lastChatTime?: string;
 };
+
+export interface iChatListFriends extends iFriendsDetail {
+  lastMessage: string;
+  lastChatTime: string;
+}
+
+interface iChatListResponse extends iFriendsDetail {
+  lastMessage: {
+    cipherText: string;
+    nonce: string;
+    timestamp: string;
+  }
+}
 
 export interface iPendingRequestType {
   requestId: string;
@@ -29,21 +40,22 @@ export interface iFriendRequestResponse {
 };
 
 export interface iFriendsContext {
-  friends: iFriendsDetail[];
-  selectedFriends: iFriendsDetail;
+  friends: iChatListFriends[];
+  selectedFriends: iChatListFriends;
   friendRequests: iFriendRequestResponse;
   friendRequestLoading: boolean;
   setSelectedFriends: (id: string) => void;
   friendsMessageEncKeyMap: Map<string, string> | null;
   fetchingFriendLoading: boolean;
+  chatListLoading: boolean;
 };
 
 const FriendsContext = createContext<iFriendsContext>({} as iFriendsContext);
 
-interface iSetChatList extends iActionType<iFriendsDetail[]> {
+interface iSetChatList extends iActionType<iChatListFriends[]> {
   type: 'SET_CHAT_LIST';
 }
-interface iSetSelectedFriends extends iActionType<iFriendsDetail> {
+interface iSetSelectedFriends extends iActionType<iChatListFriends> {
   type: 'SET_SELECTED_FRIENDS';
 }
 interface iSetFriendRequests extends iActionType<iFriendRequestResponse> {
@@ -55,8 +67,8 @@ interface iSetFriendsPubKeys extends iActionType<Map<string, string>> {
 
 type friendsAction = iSetChatList | iSetSelectedFriends | iSetFriendRequests | iSetFriendsPubKeys;
 type stateType = {
-  chatList: iFriendsDetail[],
-  selectedFriends: iFriendsDetail,
+  chatList: iChatListFriends[],
+  selectedFriends: iChatListFriends,
   friendRequests: iFriendRequestResponse,
   friendsMessageEncKeyMap: Map<string, string> | null,
 }
@@ -83,17 +95,18 @@ interface iFriendsProvider {
 const FriendsProvider = ({ children }: iFriendsProvider) => {
   const { user } = useAuth();
   const [state, dispatch] = useReducer(friendsReducer, {
-    chatList: mockFriendsList,
-    selectedFriends: {} as iFriendsDetail,
+    chatList: [] as iChatListFriends[],
+    selectedFriends: {} as iChatListFriends,
     friendRequests: {} as iFriendRequestResponse,
     friendsMessageEncKeyMap: null,
   });
   const { loading, request: fetchFriendsKeyMap } = useFetch('/friend/all');
   const { loading: fetchingFriendLoading, request: searchFriendDetails } = useFetch('/friend/details');
   const { loading: friendRequestLoading, request: getFriendRequest } = useFetch('/friend/request');
+  const { loading: chatListLoading, request: getChatList } = useFetch('/message/fetch-chat-list');
 
   const handleSelectFriend = async (id: string) => {
-    const selectedFriend = state.chatList.find((friend: iFriendsDetail) => friend.id === id);
+    const selectedFriend = state.chatList.find((friend: iChatListFriends) => friend.id === id);
     if (selectedFriend) {
       dispatch({ type: 'SET_SELECTED_FRIENDS', payload: selectedFriend });
     } else {
@@ -104,7 +117,7 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
         method: 'GET',
       });
       if (data && !error && data.friendDetail.length) {
-        const friendsDetail = { ...data.friendDetail[0], lastMessage: '', lastChatTime: Date.now().toString() } as iFriendsDetail;
+        const friendsDetail = { ...data.friendDetail[0], lastMessage: '', lastChatTime: Date.now().toString() } as iChatListFriends;
 
         if (!state.friendsMessageEncKeyMap?.has(friendsDetail.id)) {
           const newFriendsMessageEncKeyMap = new Map(state.friendsMessageEncKeyMap);
@@ -117,6 +130,28 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
       }
       if (error) console.log(error);
     }
+  };
+
+  const fetchChatList = async () => {
+    const { data, error } = await getChatList();
+    if (data && data?.chatList?.length) {
+      const decodedChatList = data.chatList.reduce((acc: iChatListFriends[], chat: iChatListResponse) => {
+        const { lastMessage: { cipherText, nonce, timestamp }, ...rest } = chat;
+        if (state?.friendsMessageEncKeyMap?.has(chat.id)) {
+          acc.push({
+            ...rest,
+            lastMessage: decryptMessage(
+              { cipherText, nonce }, state?.friendsMessageEncKeyMap?.get(chat.id)!
+            ) as string,
+            lastChatTime: timestamp,
+          });
+        }
+        return acc;
+      }, [] as iChatListFriends[]);
+
+      dispatch({ type: 'SET_CHAT_LIST', payload: decodedChatList });
+    }
+    if (error) console.log(error);
   };
 
   const fetchFriendsKeys = async () => {
@@ -141,9 +176,15 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
   useEffect(() => {
     if (user) {
       fetchFriendsKeys();
-      fetchFriendRequest()
+      fetchFriendRequest();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user && state?.friendsMessageEncKeyMap?.size) {
+      fetchChatList();
+    }
+  }, [state.friendsMessageEncKeyMap]);
 
   const { chatList, selectedFriends, friendRequests, friendsMessageEncKeyMap } = state;
   return (
@@ -154,6 +195,7 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
       friendRequests,
       friendRequestLoading,
       fetchingFriendLoading,
+      chatListLoading,
       setSelectedFriends: handleSelectFriend
     }}>
       {loading ? <Loader /> : children}
