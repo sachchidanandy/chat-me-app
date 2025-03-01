@@ -10,6 +10,8 @@ const withDateTime = {
 };
 
 export const getRedableTimeStamp = (chatTime: string) => {
+  if (!chatTime) return '';
   const timeStamp = new Date(chatTime);
+  if (!timeStamp || isNaN(timeStamp.getTime())) return '';
   return timeStamp.toLocaleDateString() === new Date().toLocaleDateString() ? timeStamp.toLocaleString('en-US', onlyTime as Intl.DateTimeFormatOptions) : timeStamp.toLocaleString('en-US', withDateTime as Intl.DateTimeFormatOptions);
 };

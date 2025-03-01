@@ -4,6 +4,7 @@ import Message from "./Message";
 import { iMessage, useChat } from "../../contextProvider/ChatProvider";
 import useDebounceCall from "../../hooks/useDebounceCall";
 import Svg from "../Svg";
+import Loader from "../Loader";
 
 const MessagesList = () => {
   const { messages, fetchMessages, loadingMessages, hasMore } = useChat();
@@ -56,6 +57,7 @@ const MessagesList = () => {
         />
       }
       <div className="max-w-5xl w-full">
+        {loadingMessages && <div className="w-full flex justify-center"><Loader size="w-14" /></div>}
         {
           messages?.map((message: iMessage) => (<Message key={message.id} message={message} />))
         }

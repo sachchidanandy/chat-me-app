@@ -15,7 +15,7 @@ const ChatHeader = ({ isMobile, setShowMessageSection }: iChatSectionProps) => {
         </button>}
         <img className="size-14 rounded-full" src={profilePicUrl} alt={`${name}-profile-pic`} />
         <div className="flex flex-col">
-          <span className="text-lg font-semibold">
+          <span className="text-lg font-semibold capitalize">
             {name}
           </span>
           {typing && <span className="text-sm font-light">typing...</span>}

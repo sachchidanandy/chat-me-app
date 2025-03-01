@@ -25,7 +25,7 @@ const FriendsCard = ({ friend, selected }: iFriendsCardProps) => {
           />
         </figure>
         <div className="card-body p-2 gap-1 max-w-[calc(100%-4rem)]">
-          <span className="font-bold text-base">
+          <span className="font-bold text-base capitalize">
             {name}
             <span className="font-normal text-xs float-right">{getRedableTimeStamp(lastChatTime)}</span>
           </span>
