@@ -264,6 +264,62 @@ const Svg = ({ svgName, className, ...props }: iSvgProps): JSX.Element | null =>
           />
         </svg>
       )
+    case 'camera':
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          className={className}
+          {...props}
+        >
+          <path
+            fill="currentColor"
+            d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5s5 2.24 5 5s-2.24 5-5 5"
+          />
+        </svg>
+      )
+    case 'document-upload':
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          className={className}
+          {...props}
+        >
+          <path
+            fill="currentColor"
+            d="M14 2H4v20h16V8zm-1 13v4h-2v-4H8l4.01-4L16 15zm0-6V3.5L18.5 9z"
+          />
+        </svg>
+      )
+    case 'image-upload':
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          className={className}
+          {...props}
+        >
+          <path
+            fill="currentColor"
+            d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2M8.5 13.5l2.5 3.01L14.5 12l4.5 6H5z"
+          />
+        </svg>
+      )
+    case 'file':
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          className={className}
+          {...props}
+        >
+          <path
+            fill="currentColor"
+            d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8zM6 20V4h7v5h5v11z"
+          />
+        </svg>
+      )
     default:
       return null;
   }

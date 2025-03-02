@@ -90,7 +90,7 @@ const Dashboard = () => {
 
   const handleViewChat = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    if (isMobile && showMessageSection && (e.target as Element).closest('a')) {
+    if (isMobile && !showMessageSection && (e.target as Element).closest('a')) {
       setShowMessageSection(true);
     }
   };
