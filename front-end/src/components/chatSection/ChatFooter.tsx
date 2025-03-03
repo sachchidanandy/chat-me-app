@@ -6,26 +6,56 @@ import Svg from "../Svg";
 import { useChat } from "../../contextProvider/ChatProvider";
 import CameraModal from "../CameraModal";
 import FilePreview from "../FilePreview";
+import { convertBlobToFile } from "../../utils/fileEncryption";
+import useFileUpload from "../../hooks/useFileUpload";
+import { useAuth } from "../../contextProvider/AuthProvider";
+import { eToastType } from "../toast/Toast";
 
 const ChatFooter = () => {
   const { sendMessage } = useChat();
   const [message, setMessage] = useState('');
+  const { handleToastToogle } = useAuth();
   const [showPicker, setShowPicker] = useState(false);
   const [showFilePicker, setShowFilePicker] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [mediaFile, setMediaFile] = useState<File | null | Blob>(null);
+  const [mediaFile, setMediaFile] = useState<File | Blob | null>(null);
+  const { loading: fileUploadLoading, uploadPer, uploadFile } = useFileUpload();
 
   const handleEmojiClick = (emoji: any) => {
     setMessage(prevMessage => prevMessage + emoji.native);
   };
 
-  const handleSendMessage = (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent) => {
+  const handleSendMessage = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (message.trim() !== '') {
-      sendMessage(message.trim());
+    if (message.trim() !== '' || mediaFile) {
+      try {
+        let file = mediaFile;
+        // Check if a mediaFile is a Blob not File
+        if (mediaFile instanceof Blob && !(mediaFile instanceof File)) {
+          // Convert Blob to File
+          const timestamp = Date.now();
+          const randomStr = Math.random().toString(36).substring(2); // generate a random string
+          file = convertBlobToFile(mediaFile, `file_${timestamp}_${randomStr}.jpg`) as File;
+        }
+
+        let fileMetaData = null;
+        if (file) {
+          const { error, data } = await uploadFile(file as File);
+          if (error || !data) {
+            throw error ?? 'Error while uploading file';
+          }
+
+          fileMetaData = { ...data };
+        }
+        sendMessage(message.trim(), fileMetaData);
+      } catch (err) {
+        console.log(err);
+        handleToastToogle('Unable to send message', eToastType.error);
+      }
     }
     setMessage('');
+    setMediaFile(null);
   };
 
   const handleMediaCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,8 +68,9 @@ const ChatFooter = () => {
 
   useEffect(() => {
     if (mediaFile) {
-      console.log(mediaFile);
-      (document.getElementById('file-preview-modal') as HTMLDialogElement).showModal()
+      (document.getElementById('file-preview-modal') as HTMLDialogElement).showModal();
+    } else {
+      (document.getElementById('file-preview-modal') as HTMLDialogElement).close();
     }
   }, [mediaFile]);
 
@@ -117,6 +148,8 @@ const ChatFooter = () => {
         setMessage={setMessage}
         message={message}
         handleSendMessage={handleSendMessage}
+        fileUploadLoading={fileUploadLoading}
+        uploadPer={uploadPer}
       />
     </div>
   );

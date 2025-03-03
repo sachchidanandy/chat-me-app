@@ -4,7 +4,7 @@ import { useAuth } from "./AuthProvider";
 import Loader from "../components/Loader";
 import { iActionType } from "../types/common";
 import { getMessageEncryptionSecret, getPrivateKey } from "../utils/encryptionKeys";
-import { decryptMessage } from "../utils/messages";
+import { decryptMessage } from "../utils/messagesEncryption";
 
 export interface iFriendsDetail {
   id: string;
