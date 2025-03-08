@@ -34,7 +34,8 @@ const axiosInstance = axios.create({
   timeout: 5000,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  responseType: 'json',
 });
 
 const useFetch = (url: string): iUseApiResponse => {

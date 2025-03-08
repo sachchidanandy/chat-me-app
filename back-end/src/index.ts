@@ -10,14 +10,15 @@ import router from '@routers/index';
 import { PORT, CORS_ALLOWED_DOMAIN, REDIS_URL } from '@utils/config';
 import connectDB from '@utils/connectDB';
 import { sendErrorResponse } from '@utils/wrapper';
-import { INTERNAL_SERVER_ERROR, NOT_FOUND } from '@constants/statusCode';
+import { BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND } from '@constants/statusCode';
 import { INT_SER_ERROR, URL_DO_NOT_EXIST } from '@constants/errorMessages';
 import { ErrorResponse } from '@utils/errorResponse';
 import { handleRedisSubscription, handleSocketConnection } from '@controllers/socket.controller';
+import { MulterError } from 'multer';
 
 const app: Express = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: `${CORS_ALLOWED_DOMAIN}` } });
+export const io = new Server(server, { cors: { origin: `${CORS_ALLOWED_DOMAIN}` } });
 
 // Publisher for publishing events & storing active users
 const redisPub = new Redis(REDIS_URL);
@@ -34,9 +35,9 @@ app.use(cors({
   origin: CORS_ALLOWED_DOMAIN, // Replace with your React app's origin
   credentials: true, // Allow credentials (cookies, authorization headers, etc.)
 }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', router);
 
@@ -49,6 +50,8 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
   console.error("===== ERROR =====", error);
   if (error instanceof ErrorResponse) {
     sendErrorResponse(res, error.message, error.status);
+  } else if (error instanceof MulterError) {
+    sendErrorResponse(res, error.message, BAD_REQUEST);
   } else {
     sendErrorResponse(res, INT_SER_ERROR, INTERNAL_SERVER_ERROR);
   }

@@ -1,7 +1,7 @@
 import CryptoJS from "crypto-js";
 
 type encryptedFileType = {
-  encryptedFile: string,
+  encryptedBlob: Blob,
   iv: string,
 }
 
@@ -11,19 +11,32 @@ export const encryptFile = async (file: File, sharedSecret: string): Promise<enc
     reader.readAsArrayBuffer(file);
 
     reader.onload = () => {
-      const fileData = new Uint8Array(reader.result as ArrayBuffer);
+      const worker = new Worker(new URL("../workers/encryptFileWorker.ts", import.meta.url), {
+        type: "module",
+      });
 
-      // Generate a random IV (16 bytes for AES-GCM)
-      const iv = CryptoJS.lib.WordArray.random(16);
-
-      // Encrypt file using AES-GCM with the shared secret & IV
-      const encryptedFile = CryptoJS.AES.encrypt(
-        CryptoJS.lib.WordArray.create(fileData),
+      worker.postMessage({
+        fileData: new Uint8Array(reader.result as ArrayBuffer),
         sharedSecret,
-        { iv }
-      ).toString();
+        fileType: file.type
+      });
 
-      resolve({ encryptedFile, iv: CryptoJS.enc.Base64.stringify(iv) });
+      worker.onmessage = (event) => {
+        if (event.data.error) {
+          reject(event.data.error);
+        } else {
+          resolve({
+            encryptedBlob: event.data.encryptedBlob,
+            iv: event.data.iv,
+          });
+        }
+        worker.terminate(); // Stop worker after use
+      };
+
+      worker.onerror = (error) => {
+        reject(error);
+        worker.terminate();
+      };
     };
 
     reader.onerror = (error) => reject(error);
@@ -31,13 +44,31 @@ export const encryptFile = async (file: File, sharedSecret: string): Promise<enc
 };
 
 export const decryptFile = async (encryptedFile: string, iv: string, sharedSecret: string): Promise<Blob> => {
-  // Convert IV back to WordArray
-  const ivWordArray = CryptoJS.enc.Base64.parse(iv);
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL("../workers/decryptFileWorker.ts", import.meta.url), {
+      type: "module",
+    });
 
-  // Decrypt file using AES-GCM with the shared secret & IV
-  const decryptedFileData = CryptoJS.AES.decrypt(encryptedFile, sharedSecret, { iv: ivWordArray }).toString(CryptoJS.enc.Utf8);
+    worker.postMessage({
+      encryptedFile,
+      iv,
+      sharedSecret,
+    });
 
-  return new Blob([decryptedFileData], { type: "application/octet-stream" });
+    worker.onmessage = (event) => {
+      if (event.data.error) {
+        reject(event.data.error);
+      } else {
+        resolve(event.data.decryptedFileBlob);
+      }
+      worker.terminate(); // Stop worker after use
+    };
+
+    worker.onerror = (error) => {
+      reject(error);
+      worker.terminate();
+    };
+  });
 };
 
 export const convertBlobToFile = (blob: Blob, fileName: string): File => {
