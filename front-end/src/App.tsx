@@ -21,9 +21,15 @@ function App() {
           <BrowserRouter>
             <Suspense fallback={<Loader />}>
               <Navbar />
-              <div className="flex flex-col items-center justify-center align-center h-full w-full">
+              <div
+                className="flex flex-col items-center justify-center align-center h-full w-full">
                 <Routes>
-                  <Route path="/:friendId?" element={<ProtectedRoute element={Dashboard} />} />
+                  <Route
+                    path="/:friendId?"
+                    element={<ProtectedRoute element={
+                      Dashboard
+                    } />
+                    } />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Signup />} />
                 </Routes>

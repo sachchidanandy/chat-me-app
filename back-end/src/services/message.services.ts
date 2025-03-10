@@ -23,7 +23,8 @@ export const fetchUserMessages = async (userId: string, friendsId: string, offse
         timestamp: '$timestamp',
         status: '$status',
         cipherText: '$cipher_text',
-        nonce: '$nonce'
+        nonce: '$nonce',
+        attachment: '$attachment'
       }
     }
   ]);

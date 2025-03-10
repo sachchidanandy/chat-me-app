@@ -10,5 +10,6 @@ export const ALREADY_A_FRIEND = 'Given users are already friends';
 export const NO_REQUEST_FOUND = 'No friend request found';
 export const NO_FRIEND_FOUND = 'No friends found';
 export const NO_FILE_FOUND = 'No file found';
+export const INVALID_THUMBNAIL = 'Thumbnail URL and file name are required';
 export const ALREADY_SENT_REQUEST = (fullName: string, date: Date) => `You have already send request to ${fullName} on ${new Date(date).toDateString()}`
 export const URL_DO_NOT_EXIST = (method: string, path: string) => `Method: [${method}], Path: [${path}] Don't exist, please check it.`;

@@ -10,6 +10,7 @@ export interface iUploadFileMetaData {
   uploadedAt: Date;
   expiredAt: Date;
   iv: string;
+  thumbnailName: string;
 }
 export interface IMessage {
   sender_id: Schema.Types.ObjectId;
@@ -34,6 +35,7 @@ const messageSchema = new Schema({
     uploadedAt: { type: Date },
     expiredAt: { type: Date },
     iv: { type: String },
+    thumbnailName: { type: String },
   },
   status: { type: String, enum: ["sent", "delivered", "seen"] },
   timestamp: { type: Date, default: Date.now },

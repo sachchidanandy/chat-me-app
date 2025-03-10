@@ -48,6 +48,7 @@ export interface iFriendsContext {
   friendsMessageEncKeyMap: Map<string, string> | null;
   fetchingFriendLoading: boolean;
   chatListLoading: boolean;
+  getSelectedFriendEncKey: () => string | null;
 };
 
 const FriendsContext = createContext<iFriendsContext>({} as iFriendsContext);
@@ -173,6 +174,13 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
     if (error) console.log(error);
   };
 
+  const getSelectedFriendEncKey = () => {
+    if (state.friendsMessageEncKeyMap?.has(state.selectedFriends.id)) {
+      return state.friendsMessageEncKeyMap?.get(state.selectedFriends.id) as string;
+    }
+    return null;
+  }
+
   useEffect(() => {
     if (user) {
       fetchFriendsKeys();
@@ -196,7 +204,8 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
       friendRequestLoading,
       fetchingFriendLoading,
       chatListLoading,
-      setSelectedFriends: handleSelectFriend
+      setSelectedFriends: handleSelectFriend,
+      getSelectedFriendEncKey: getSelectedFriendEncKey
     }}>
       {loading ? <Loader /> : children}
     </FriendsContext.Provider>

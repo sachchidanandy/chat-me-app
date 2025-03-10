@@ -13,9 +13,11 @@ export interface iMessage {
   recipientId: string;
   timestamp: string;
   status: string;
+  file?: File | null;
+  attachment: iUploadFileMetaData | null
 };
 
-export interface iMessagePayload extends Omit<iMessage, 'msg'> {
+export interface iMessagePayload extends Omit<iMessage, 'msg' | 'file'> {
   cipherText: string;
   nonce: string;
 }
@@ -26,7 +28,7 @@ export interface iChatContext {
   hasMore: boolean;
   messages: iMessage[];
   fetchMessages: (limit?: number) => void;
-  sendMessage: (messages: string, fileMetaData: iUploadFileMetaData | null) => void;
+  sendMessage: (messages: string, fileMetaData: iUploadFileMetaData | null, file: File | null) => void;
 };
 
 const ChatContext = createContext({} as iChatContext);
@@ -41,7 +43,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [typing, setTyping] = useState(false);
   const { loading: loadingMessages, request: getMessages } = useFetch(`/message/${id}`);
 
-  const sendMessage = (messages: string, fileMetaData: iUploadFileMetaData | null) => {
+  const sendMessage = (messages: string, fileMetaData: iUploadFileMetaData | null, file: File | null = null) => {
     // Encrypt message
     const { cipherText, nonce } = messages ? encryptMessage(
       messages, friendsMessageEncKeyMap?.get(id) || ''
@@ -53,11 +55,13 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       senderId: user?.userId || '',
       recipientId: id,
       timestamp: new Date().toString(),
+      file,
       status: 'sent',
+      attachment: fileMetaData
     };
 
     // Create payload
-    const messagePayload: iMessagePayload = (({ msg, ...rest }) => ({
+    const messagePayload: iMessagePayload = (({ msg, file, ...rest }) => ({
       ...rest,
       cipherText,
       nonce,
@@ -69,14 +73,11 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const handleRecieveMessages = useCallback((messagePayload: iMessagePayload) => {
-    const { senderId, recipientId, timestamp, status, cipherText, nonce, id: messageId } = messagePayload;
+    const { cipherText, nonce, ...rest } = messagePayload;
+
     // Decrypt cipherText
     const message: iMessage = {
-      id: messageId,
-      senderId,
-      recipientId,
-      timestamp,
-      status,
+      ...rest,
       msg: cipherText ? decryptMessage({ cipherText, nonce }, friendsMessageEncKeyMap?.get(id) || '')! : '',
     };
 
@@ -98,9 +99,9 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       if (fetchedMessages) {
         const reverseMessages = fetchedMessages.slice().reverse();
         const decodedMessages = reverseMessages.map((message: iMessagePayload) => {
-          const { id: messageId, cipherText, nonce, ...rest } = message;
+          const { cipherText, nonce, ...rest } = message;
           const msg = cipherText ? decryptMessage({ cipherText, nonce }, friendsMessageEncKeyMap?.get(id) || '') : '';
-          return { id: messageId, msg, ...rest } as iMessage;
+          return { msg, ...rest } as iMessage;
         });
 
         messagesMap.current.set(id, [...decodedMessages, ...(messagesMap.current.get(id) || [])]);

@@ -28,7 +28,7 @@ type requestReturnType = {
   error: string | null,
 }
 
-const axiosInstance = axios.create({
+export const axiosInstance = axios.create({
   withCredentials: true,
   baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`,
   timeout: 5000,

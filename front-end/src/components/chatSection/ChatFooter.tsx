@@ -6,10 +6,11 @@ import Svg from "../Svg";
 import { useChat } from "../../contextProvider/ChatProvider";
 import CameraModal from "../CameraModal";
 import FilePreview from "../FilePreview";
-import { convertBlobToFile } from "../../utils/fileEncryption";
 import useFileUpload, { iUploadFileMetaData } from "../../hooks/useFileUpload";
 import { useAuth } from "../../contextProvider/AuthProvider";
 import { eToastType } from "../toast/Toast";
+import { convertBlobToFile, generateUniqueFileName } from "../../utils/helpers";
+import { generateCompressedThumbnail } from "../../utils/filesThumbnail";
 
 const ChatFooter = () => {
   const { sendMessage } = useChat();
@@ -19,7 +20,7 @@ const ChatFooter = () => {
   const [showFilePicker, setShowFilePicker] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [mediaFile, setMediaFile] = useState<File | Blob | null>(null);
-  const { loading: fileUploadLoading, uploadPer, uploadFile } = useFileUpload();
+  const { loading: fileUploadLoading, uploadFile } = useFileUpload();
 
   const handleEmojiClick = (emoji: any) => {
     setMessage(prevMessage => prevMessage + emoji.native);
@@ -34,16 +35,16 @@ const ChatFooter = () => {
         // Check if a mediaFile is a Blob not File
         if (mediaFile instanceof Blob && !(mediaFile instanceof File)) {
           // Convert Blob to File
-          const timestamp = Date.now();
-          const randomStr = Math.random().toString(36).substring(2); // generate a random string
-          file = convertBlobToFile(mediaFile, `file-${timestamp}-${randomStr}.jpg`) as File;
+          file = convertBlobToFile(mediaFile) as File;
         }
 
         let fileMetaData: null | iUploadFileMetaData = null;
         if (file) {
-          fileMetaData = await uploadFile(file as File);
+          const thumbnail = await generateCompressedThumbnail(file as File);
+          const uniqueThumbnailName = generateUniqueFileName((file as File)?.name);
+          fileMetaData = await uploadFile(file as File, thumbnail, uniqueThumbnailName);
         }
-        // sendMessage(message.trim(), fileMetaData);
+        sendMessage(message.trim(), fileMetaData, file as File);
       } catch (err) {
         console.log(err);
         handleToastToogle('Unable to send message', eToastType.error);
@@ -144,7 +145,6 @@ const ChatFooter = () => {
         message={message}
         handleSendMessage={handleSendMessage}
         fileUploadLoading={fileUploadLoading}
-        uploadPer={uploadPer}
       />
     </div>
   );

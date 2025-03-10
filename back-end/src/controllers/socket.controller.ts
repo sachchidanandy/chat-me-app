@@ -1,10 +1,11 @@
 import { Server } from "socket.io";
-import Message, { IMessage, MessageStatus } from "../models/message.model";
+import Message, { IMessage, iUploadFileMetaData, MessageStatus } from "../models/message.model";
 import Redis from "ioredis";
 
 type MessageData = {
   cipherText: string;
   nonce: string;
+  attachment?: iUploadFileMetaData;
 };
 
 type SenderRecipient = {
@@ -43,14 +44,15 @@ export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: 
     });
 
     // Send a message
-    socket.on('send_message', async ({ senderId, recipientId, cipherText, nonce }: SenderRecipientMessage) => {
+    socket.on('send_message', async ({ senderId, recipientId, cipherText, nonce, attachment }: SenderRecipientMessage) => {
       const newMessage = new Message(
         {
           sender_id: senderId,
           recipient_id: recipientId,
           cipher_text: cipherText,
           nonce: nonce,
-          status: 'sent'
+          status: 'sent',
+          attachment: attachment
         }
       );
       if (activeUsers.has(recipientId)) {
@@ -63,9 +65,10 @@ export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: 
           nonce,
           timestamp: newMessage.timestamp,
           status: newMessage.status as MessageStatus,
+          attachment,
         });
       } else {
-        redisPub.publish('chat_channel', JSON.stringify({ senderId, recipientId, cipherText, nonce }));
+        redisPub.publish('chat_channel', JSON.stringify({ senderId, recipientId, cipherText, nonce, attachment }));
       }
       await newMessage.save();
     });

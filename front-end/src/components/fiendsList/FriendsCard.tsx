@@ -13,17 +13,21 @@ const FriendsCard = ({ friend, selected }: iFriendsCardProps) => {
   const { id, name, profilePicUrl, lastChatTime, lastMessage } = friend;
 
   const bgClasses = selected ? ' bg-primary text-primary-content' : ' text-base-content btn-ghost';
+  const namesInitials = () => name.split(' ').map((name) => name.charAt(0).toUpperCase()).join('');
 
   return (
     <Link to={`/${id}`} className={animationStyle.fadeIn}>
       <div className={"card card-side h-16 px-1 md:max-w-sm max-w-screen-sm hover:cursor-pointer" + bgClasses}>
-        <figure>
+        {profilePicUrl ? <figure>
           <img
             src={profilePicUrl}
             alt={`${name}-pic`}
             className="size-14 rounded-full"
           />
-        </figure>
+        </figure> : <div
+          className="size-14 rounded-full bg-blue-600 text-white flex justify-center items-center font-bold text-2xl self-center">
+          {namesInitials() || ''}
+        </div>}
         <div className="card-body p-2 gap-1 max-w-[calc(100%-4rem)]">
           <span className="font-bold text-base capitalize">
             {name}

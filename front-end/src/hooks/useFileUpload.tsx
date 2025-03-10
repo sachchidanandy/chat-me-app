@@ -12,6 +12,7 @@ export interface iUploadFileMetaData {
   uploadedAt: string;
   expiredAt: string;
   iv: string;
+  thumbnailName: string;
 };
 
 /**
@@ -26,41 +27,56 @@ const socketCleanUp = (fileId: string) => {
 };
 
 /**
- * Custom hook to handle file uploading process including encryption and progress tracking.
- * 
- * This hook provides the ability to upload a file to the server, with the file being encrypted
- * using the selected friend's encryption key. It also manages the state of the upload process,
- * including loading status and upload percentage.
- * 
- * @returns {Object} An object containing:
- *  - loading: A boolean indicating the loading state of the upload process.
- *  - uploadPer: A number representing the current upload progress percentage.
- *  - uploadFile: A function to initiate the upload process, which returns a promise that resolves
- *    with the file's upload metadata on success, or throws an error on failure.
- * 
- * @throws Will throw an error if the selected friend ID or file data is missing.
+ * Returns an object with the current file upload loading state and a function
+ * to upload a file to S3. The function takes a file and optional thumbnail
+ * and thumbnail name as arguments. It returns a promise that resolves with
+ * the file metadata and IV after the upload is complete. The promise is
+ * rejected if there is an error.
+ *
+ * The function also sets the loading state to "Encrypting..." and "Uploading..."
+ * while the encryption and upload are in progress, respectively. It resets
+ * the loading state to an empty string after the upload is complete.
+ *
+ * The loading state is updated in real time as the upload progresses.
+ *
+ * @returns An object with the loading state and the uploadFile function.
  */
-
-const useFileUpload = () => {
+const useFileUpload = (): { loading: string, uploadFile: (file: File, thumbnail?: string, thumbnailName?: string) => Promise<iUploadFileMetaData | null> } => {
   const { selectedFriends: { id }, friendsMessageEncKeyMap } = useFriends();
-  const { request } = useFetch('/message/upload-message-attachment');
-  const [uploadPer, setUploadPer] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const { request: uploadImageToS3 } = useFetch('/message/upload-message-attachment');
+  const { request: uploadThumbnail } = useFetch('/thumbnail');
+  const [loading, setLoading] = useState('');
 
   const uploadFile = useCallback(
-    async (file: File): Promise<iUploadFileMetaData | null> => {
+    async (file: File, thumbnail?: string, thumbnailName?: string): Promise<iUploadFileMetaData | null> => {
       if (id && friendsMessageEncKeyMap?.has(id) && file) {
-        setLoading(true);
+        setLoading('Encrypting...');
         try {
           // Encrypt file before uploading
           const { encryptedBlob, iv } = await encryptFile(file, friendsMessageEncKeyMap.get(id)!);
+          setLoading('Uploading...');
+
+          // Upload thumbnail
+          if (thumbnail && thumbnailName) {
+            const { error: thumbnailError } = await uploadThumbnail({
+              method: "POST",
+              data: {
+                thumbnailUrl: thumbnail,
+                fileName: thumbnailName
+              },
+            });
+
+            if (thumbnailError) {
+              throw thumbnailError;
+            }
+          }
 
           // Create FormData
           const formData = new FormData();
           formData.append("file", encryptedBlob, file.name); // Keep the original file name
 
           // Upload file
-          const { error, data } = await request({
+          const { error, data } = await uploadImageToS3({
             method: "POST",
             headers: {
               "Content-Type": "multipart/form-data",
@@ -79,23 +95,22 @@ const useFileUpload = () => {
             socketCleanUp(fileId);
             // Update upload progress
             socket.on(`uploadProgress-${fileId}`, (percent: number) => {
-              setUploadPer(percent);
+              setLoading(`${percent}%`);
             });
 
             // Upload success
             socket.once(`uploadComplete-${fileId}`, (uploadFileMetaData) => {
-              setUploadPer(100);
-              setLoading(false);
+              setLoading('100%');
 
               // Cleanup listeners after completion
               socketCleanUp(fileId);
-              resolve({ ...uploadFileMetaData, iv }); // Return file metadata with IV
+              setLoading('');
+              resolve({ ...uploadFileMetaData, iv, thumbnailName }); // Return file metadata with IV
             });
 
             // Upload error
             socket.once(`uploadError-${fileId}`, (error: string) => {
-              setUploadPer(0);
-              setLoading(false);
+              setLoading('');
 
               // Cleanup listeners after completion
               socketCleanUp(fileId);
@@ -104,19 +119,18 @@ const useFileUpload = () => {
             });
           });
         } catch (err: unknown) {
-          setLoading(false);
-          setUploadPer(0);
+          setLoading('');
           throw err instanceof Error ? err.message : String(err);
         }
       } else {
         throw "Missing selected friend ID or file data";
       }
     },
-    [id, friendsMessageEncKeyMap, request]
+    [id, friendsMessageEncKeyMap, uploadImageToS3, uploadThumbnail]
   );
 
 
-  return { loading, uploadPer, uploadFile };
+  return { loading, uploadFile };
 }
 
 export default useFileUpload;
