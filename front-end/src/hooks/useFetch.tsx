@@ -31,7 +31,7 @@ type requestReturnType = {
 export const axiosInstance = axios.create({
   withCredentials: true,
   baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`,
-  timeout: 5000,
+  timeout: 3000,
   headers: {
     'Content-Type': 'application/json'
   },

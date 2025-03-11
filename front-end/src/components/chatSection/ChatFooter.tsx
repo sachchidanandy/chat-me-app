@@ -71,13 +71,13 @@ const ChatFooter = () => {
       userTypingTimeOutRef.current = setTimeout(() => {
         triggerUserStopTypingEvent();
         userTypingTimeOutRef.current = null;
-      }, 5000);
+      }, 3000);
     } else {
       clearTimeout(userTypingTimeOutRef.current);
       userTypingTimeOutRef.current = setTimeout(() => {
         triggerUserStopTypingEvent();
         userTypingTimeOutRef.current = null;
-      }, 5000);
+      }, 3000);
     }
   };
 
