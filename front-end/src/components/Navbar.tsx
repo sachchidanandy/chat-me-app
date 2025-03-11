@@ -12,6 +12,11 @@ const Navbar = () => {
   const { userId, profilePicUrl } = user || {};
   const pendingRequests = friendRequests?.pendingRequests;
 
+  const namesInitials = () => user?.fullName
+    .split(' ')
+    .map((name) => name.charAt(0).toUpperCase())
+    .join('');
+
   return userId ? (
     <nav className="navbar bg-primary text-primary-content">
       <div className="flex-1">
@@ -24,10 +29,10 @@ const Navbar = () => {
         </div>
         <div className="dropdown dropdown-end">
           <div tabIndex={1} role="button" className="btn btn-ghost btn-circle avatar">
-            <div className="w-10 rounded-full">
-              <img
-                alt="profile-pic"
-                src={profilePicUrl} />
+            <div className="w-14 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 text-center content-center">
+              {
+                profilePicUrl ? <img alt="profile-pic" src={profilePicUrl} /> : <span className="text-2xl font-bold">{namesInitials() || ''}</span>
+              }
             </div>
           </div>
           <ul

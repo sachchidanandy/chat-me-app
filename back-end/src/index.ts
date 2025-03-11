@@ -22,7 +22,7 @@ export const io = new Server(server, { cors: { origin: `${CORS_ALLOWED_DOMAIN}` 
 
 // Publisher for publishing events & storing active users
 const redisPub = new Redis(REDIS_URL);
-const redisStore = new Redis(REDIS_URL);
+export const redisStore = new Redis(REDIS_URL);
 
 // Subscriber for listening to events
 const redisSub = new Redis(REDIS_URL);
@@ -47,7 +47,12 @@ app.use((req: Request, res: Response) => {
 });
 
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error("===== ERROR =====", error);
+  console.error("ERROR LOG: ", {
+    url: req?.path,
+    req_header: req?.headers,
+    query_params: req?.query,
+    error: error
+  });
   if (error instanceof ErrorResponse) {
     sendErrorResponse(res, error.message, error.status);
   } else if (error instanceof MulterError) {

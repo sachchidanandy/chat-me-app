@@ -6,7 +6,7 @@ interface iFilePreviewProps {
   file: File | Blob | null;
   onClose: () => void;
   message: string;
-  setMessage: (message: string) => void;
+  handleMessageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSendMessage: (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent) => void;
   fileUploadLoading: string;
 }
@@ -45,7 +45,7 @@ export const FilePreviewContainer = memo(({ file }: { file: File | Blob }) => {
 });
 
 const FilePreview: React.FC<iFilePreviewProps> = (props) => {
-  const { file, onClose, handleSendMessage, message, setMessage, fileUploadLoading } = props;
+  const { file, onClose, handleSendMessage, message, handleMessageChange, fileUploadLoading } = props;
   const disabledActions = fileUploadLoading?.length > 0;
 
   return (
@@ -68,7 +68,7 @@ const FilePreview: React.FC<iFilePreviewProps> = (props) => {
 
         {file ? <FilePreviewContainer file={file} /> : null}
         {file && <form className="w-full mt-4" onSubmit={handleSendMessage}>
-          <input type="text" disabled={disabledActions} className="grow w-full text-lg input-md" placeholder="Message..." value={message} onChange={(e) => setMessage(e.target.value)} />
+          <input type="text" disabled={disabledActions} className="grow w-full text-lg input-md" placeholder="Message..." value={message} onChange={handleMessageChange} />
           <button className="btn btn-circle btn-primary mt-2" type="submit" disabled={disabledActions}>
             <Svg svgName="send-message" className="ml-2" />
           </button>

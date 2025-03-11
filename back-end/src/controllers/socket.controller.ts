@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import Message, { IMessage, iUploadFileMetaData, MessageStatus } from "../models/message.model";
 import Redis from "ioredis";
+import User from "@models/user.model";
 
 type MessageData = {
   cipherText: string;
@@ -15,7 +16,7 @@ type SenderRecipient = {
 
 type SenderRecipientMessage = SenderRecipient & MessageData;
 
-const activeUsers = new Map<string, string>();
+export const activeUsers = new Map<string, string>();
 
 export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: Redis) => {
   io.on('connection', (socket) => {
@@ -77,15 +78,16 @@ export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: 
     socket.on('mark_as_read', async ({ senderId, recipientId }: SenderRecipient) => {
       await Message.updateMany(
         { sender_id: recipientId, recipient_id: senderId, status: 'delivered' },
-        { status: 'seen' }
+        { $set: { status: 'seen' } }
       );
       io.to(activeUsers.get(recipientId)!).emit('message_seen', { senderId });
     });
 
     // Unregister a user
-    socket.on('user_offline', (userId: string) => {
+    socket.on('user_offline', async (userId: string) => {
       activeUsers.delete(userId);
       redisStore.hdel('active_users', userId);
+      await User.updateOne({ _id: userId }, { $set: { last_seen: new Date() } });
     });
   });
 };
@@ -102,7 +104,7 @@ export const handleRedisSubscription = (io: Server, redisSub: Redis) => {
       if (activeUsers.has(recipientId)) {
         const newMessage = await Message.findOneAndUpdate(
           { sender_id: senderId, recipient_id: recipientId, status: "sent" },
-          { status: "delivered" },
+          { $set: { status: "delivered" } },
           { new: true }
         );
         io.to(activeUsers.get(recipientId)!).emit('new_message', {

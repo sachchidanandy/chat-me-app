@@ -81,7 +81,7 @@ export const acknowledgeRequest = async (req: Request, res: Response) => {
   // Change status to accepted
   const friendRequest = await FriendRequest.findOneAndUpdate(
     { _id: requestId, reciever_id: userId, status: eStatus.PENDING },
-    { status: updatedState },
+    { $set: { status: updatedState } },
     { new: true }
   );
 

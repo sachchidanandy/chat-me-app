@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import data from '@emoji-mart/data'
 import EmojiPicker from '@emoji-mart/react'
 
@@ -13,7 +13,7 @@ import { convertBlobToFile, generateUniqueFileName } from "../../utils/helpers";
 import { generateCompressedThumbnail } from "../../utils/filesThumbnail";
 
 const ChatFooter = () => {
-  const { sendMessage } = useChat();
+  const { sendMessage, triggerUserStopTypingEvent, triggerUserTypingEvent } = useChat();
   const [message, setMessage] = useState('');
   const { handleToastToogle } = useAuth();
   const [showPicker, setShowPicker] = useState(false);
@@ -21,6 +21,7 @@ const ChatFooter = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [mediaFile, setMediaFile] = useState<File | Blob | null>(null);
   const { loading: fileUploadLoading, uploadFile } = useFileUpload();
+  const userTypingTimeOutRef = useRef<number | null>(null);
 
   const handleEmojiClick = (emoji: any) => {
     setMessage(prevMessage => prevMessage + emoji.native);
@@ -62,6 +63,24 @@ const ChatFooter = () => {
     }
   };
 
+  const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    setMessage(e.target.value);
+    if (!userTypingTimeOutRef.current) {
+      triggerUserTypingEvent();
+      userTypingTimeOutRef.current = setTimeout(() => {
+        triggerUserStopTypingEvent();
+        userTypingTimeOutRef.current = null;
+      }, 5000);
+    } else {
+      clearTimeout(userTypingTimeOutRef.current);
+      userTypingTimeOutRef.current = setTimeout(() => {
+        triggerUserStopTypingEvent();
+        userTypingTimeOutRef.current = null;
+      }, 5000);
+    }
+  };
+
   useEffect(() => {
     if (mediaFile) {
       (document.getElementById('file-preview-modal') as HTMLDialogElement).showModal();
@@ -77,7 +96,7 @@ const ChatFooter = () => {
       </button>
       <label className="input input-bordered flex items-center gap-2 max-w-4xl w-full bg-primary-content text-white h-14">
         <form className="w-full" onSubmit={handleSendMessage}>
-          <input type="text" className="grow w-full text-lg" placeholder="Message..." value={message} onChange={(e) => setMessage(e.target.value)} />
+          <input type="text" className="grow w-full text-lg" placeholder="Message..." value={message} onChange={handleMessageChange} />
         </form>
         <button className="btn btn-circle btn-ghost text-white relative" onClick={() => setShowFilePicker(prev => !prev)}>
           <Svg svgName="attachment-button" />
@@ -141,7 +160,7 @@ const ChatFooter = () => {
       <FilePreview
         file={mediaFile}
         onClose={() => setMediaFile(null)}
-        setMessage={setMessage}
+        handleMessageChange={handleMessageChange}
         message={message}
         handleSendMessage={handleSendMessage}
         fileUploadLoading={fileUploadLoading}

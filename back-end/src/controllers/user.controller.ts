@@ -40,13 +40,3 @@ export const searchUsers = async (req: Request, res: Response): Promise<void> =>
 
   sendSuccessResponse(res, response);
 };
-
-export const updateUsers = async () => {
-  const users = await User.find();
-
-  users.forEach(async ({ email, _id }) => {
-    const fullName = email.split('.').slice(0, 2).join(' ').slice(0, -2);
-    await User.findByIdAndUpdate(_id, { full_name: fullName });
-  });
-};
-

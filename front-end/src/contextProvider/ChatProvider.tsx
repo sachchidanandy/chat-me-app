@@ -29,6 +29,8 @@ export interface iChatContext {
   messages: iMessage[];
   fetchMessages: (limit?: number) => void;
   sendMessage: (messages: string, fileMetaData: iUploadFileMetaData | null, file: File | null) => void;
+  triggerUserTypingEvent: () => void;
+  triggerUserStopTypingEvent: () => void;
 };
 
 const ChatContext = createContext({} as iChatContext);
@@ -120,6 +122,14 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const triggerUserTypingEvent = () => {
+    socket.emit('typing', { senderId: user?.userId || '', recipientId: id });
+  };
+
+  const triggerUserStopTypingEvent = () => {
+    socket.emit('stop_typing', { senderId: user?.userId || '', recipientId: id });
+  };
+
   useEffect(() => {
     if (id && user?.userId) {
       if (messagesMap.current.has(id)) {
@@ -144,7 +154,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <ChatContext.Provider
-      value={{ messages, sendMessage, typing, loadingMessages, fetchMessages, hasMore }}
+      value={{ messages, sendMessage, typing, loadingMessages, fetchMessages, hasMore, triggerUserTypingEvent, triggerUserStopTypingEvent }}
     >
       {children}
     </ChatContext.Provider>

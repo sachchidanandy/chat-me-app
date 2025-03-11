@@ -43,7 +43,7 @@ const ChatHeader = ({ isMobile, setShowMessageSection }: iChatSectionProps) => {
           <span className="text-lg font-semibold capitalize">
             {name}
           </span>
-          {typing && <span className="text-sm font-light">typing...</span>}
+          {typing && <span className="text-sm font-light animate-bounce">Typing...</span>}
         </div>
       </div>
       <div className="flex items-center gap-2">

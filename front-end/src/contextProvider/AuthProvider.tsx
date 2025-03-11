@@ -114,9 +114,10 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
     } catch (error) {
       console.log("Error while logging out: ", error);
     } finally {
+      socket.emit('user_offline', userData?.user?.userId || user?.userId);
       setUser(null);
       removePrivateKey();
-      socket.emit('user_offline', userData?.user?.userId);
+      window.location.href = '/login';
     }
   };
 

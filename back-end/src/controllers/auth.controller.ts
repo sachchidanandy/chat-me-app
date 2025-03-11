@@ -7,6 +7,8 @@ import { EMAIL_ALREADY_REGISTERED, INVALID_CREDENTIALS, USER_NOT_FOUND } from "@
 import { ErrorResponse } from "@utils/errorResponse";
 import { generateToken } from "@utils/jwtToken";
 import { encryptPassword, comparePassword } from "@utils/encryption";
+import { activeUsers } from "./socket.controller";
+import { redisStore } from "src";
 
 export const signup = async (req: Request, res: Response) => {
   const { username, email, fullName, password, publicKey, encryptedPrivateKey } = req.body;
@@ -93,6 +95,14 @@ export const loginUser = async (req: Request, res: Response) => {
 export const logoutUser = async (req: Request, res: Response) => {
   res.clearCookie('access_token');
   return sendSuccessResponse(res, { message: 'User logged out successfully!' });
+};
+
+export const tabClosedLogout = async (req: Request, res: Response) => {
+  const { userId } = req.body;
+  await User.updateOne({ _id: userId }, { $set: { last_seen: new Date() } });
+  activeUsers.delete(userId);
+  await redisStore.hdel('active_users', userId);
+  return sendSuccessResponse(res);
 };
 
 export const fetchLogedInUser = async (req: Request, res: Response) => {

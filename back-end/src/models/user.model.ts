@@ -8,6 +8,7 @@ interface iUser extends Document {
   pub_key: string;
   priv_key: string;
   profile_pic_url: string;
+  last_seen: Date;
 };
 
 const userSchema = new Schema<iUser>({
@@ -46,9 +47,15 @@ const userSchema = new Schema<iUser>({
   profile_pic_url: {
     type: String,
     default: ''
+  },
+  last_seen: {
+    type: Date,
+    default: Date.now
   }
 }, { timestamps: true });
 
 // Not adding any specific index as already added search_users index in mongoDB Atlas
 
-export default model('User', userSchema);
+const User = model('User', userSchema);
+
+export default User;
