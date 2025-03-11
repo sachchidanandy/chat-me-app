@@ -54,10 +54,10 @@ const Dashboard = () => {
   }, [debouncedSearchValue]);
 
   useEffect(() => {
-    if (friendId) {
+    if (friendId && !chatListLoading) {
       setSelectedFriends(friendId);
     }
-  }, [friendId]);
+  }, [friendId, chatListLoading]);
 
   useEffect(() => {
     if (globalSearchData?.users) {

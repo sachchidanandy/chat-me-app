@@ -24,6 +24,8 @@ export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: 
     socket.on('user_online', (userId: string) => {
       activeUsers.set(userId, socket.id);
       redisStore.hset('active_users', userId, socket.id);
+      // Notify all services via Redis Pub/Sub
+      redisPub.publish("user_status_channel", JSON.stringify({ userId, status: "online" }));
     });
 
     // Indicate typing
@@ -88,6 +90,8 @@ export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: 
       activeUsers.delete(userId);
       redisStore.hdel('active_users', userId);
       await User.updateOne({ _id: userId }, { $set: { last_seen: new Date() } });
+      // Notify all services via Redis Pub/Sub
+      redisPub.publish("user_status_channel", JSON.stringify({ userId, status: "offline" }));
     });
   });
 };
@@ -96,6 +100,7 @@ export const handleRedisSubscription = (io: Server, redisSub: Redis) => {
   redisSub.subscribe("chat_channel");
   redisSub.subscribe("typing_channel");
   redisSub.subscribe("stop_typing_channel");
+  redisSub.subscribe("user_status_channel");
 
   redisSub.on("message", async (channel, message) => {
     const messageData = JSON.parse(message);
@@ -125,6 +130,14 @@ export const handleRedisSubscription = (io: Server, redisSub: Redis) => {
       const { userId, recipientId } = messageData;
       if (activeUsers.has(recipientId)) {
         io.to(activeUsers.get(recipientId)!).emit('user_stop_typing', { senderId: userId });
+      }
+    } else if (channel === 'user_status_channel') {
+      const { userId, status } = JSON.parse(message) ?? {};
+      if (userId && status) {
+        console.log(`User ${userId} is now ${status}`);
+
+        // You can now broadcast this to connected clients
+        io.emit("user_status_update", { userId, status });
       }
     }
   });

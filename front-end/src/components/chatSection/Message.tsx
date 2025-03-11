@@ -21,7 +21,7 @@ const Message = memo(({ style, message }: MessagePropsType) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [downloadedFile, setDownloadedFile] = useState<File | Blob | null | undefined>(file);
   const { user } = useAuth();
-  const { getSelectedFriendEncKey } = useFriends();
+  const { selectedFriendEncKey } = useFriends();
   const userId = user?.userId;
 
   const { chatContainerClass, messageClass } = senderId === userId ? {
@@ -33,7 +33,6 @@ const Message = memo(({ style, message }: MessagePropsType) => {
   };
 
   const handleDownload = async () => {
-    const selectedFriendEncKey = getSelectedFriendEncKey();
     if (attachment && attachment.fileUrl && selectedFriendEncKey) {
       try {
         setLoading(true);

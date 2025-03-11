@@ -8,7 +8,7 @@ import { handleFileUpload } from "@services/uploadFile.services";
 import { ErrorResponse } from "@utils/errorResponse";
 import { sendSuccessResponse } from "@utils/wrapper";
 import { Request, Response } from "express";
-import { io } from "src";
+import { io, redisStore } from "src";
 import { AWS_S3_BUCKET_NAME } from '@utils/config';
 
 export const fetchMessages = async (req: Request, res: Response) => {
@@ -28,7 +28,14 @@ export const fetchMessages = async (req: Request, res: Response) => {
 
 export const fetchChatList = async (req: Request, res: Response) => {
   const { userId } = req?.body;
-  const chatList = await fetchUserChatList(userId);
+  let chatList = await fetchUserChatList(userId);
+  if (chatList?.length) {
+    // get all active users { "123": "socket123xyz", "456": "socket456abc" }
+    const activeUsers = await redisStore.hgetall("active_users");
+    if (Object.keys(activeUsers).length) {
+      chatList = chatList.map(chat => ({ ...chat, isOnline: activeUsers[chat.id] ? true : false }))
+    }
+  }
   return sendSuccessResponse(res, { chatList });
 };
 

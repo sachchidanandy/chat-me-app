@@ -21,7 +21,7 @@ const server = http.createServer(app);
 export const io = new Server(server, { cors: { origin: `${CORS_ALLOWED_DOMAIN}` } });
 
 // Publisher for publishing events & storing active users
-const redisPub = new Redis(REDIS_URL);
+export const redisPub = new Redis(REDIS_URL);
 export const redisStore = new Redis(REDIS_URL);
 
 // Subscriber for listening to events
@@ -47,12 +47,20 @@ app.use((req: Request, res: Response) => {
 });
 
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error("ERROR LOG: ", {
+  const reqBody = { ...req?.body };
+  delete reqBody.password;
+  delete reqBody.publicKey;
+  delete reqBody.encryptedPrivateKey;
+
+
+  console.error("ERROR LOG : ", {
     url: req?.path,
     req_header: req?.headers,
     query_params: req?.query,
+    body: reqBody,
     error: error
   });
+
   if (error instanceof ErrorResponse) {
     sendErrorResponse(res, error.message, error.status);
   } else if (error instanceof MulterError) {

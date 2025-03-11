@@ -3,6 +3,7 @@ import { useFriends } from "../../contextProvider/FriendsProvider";
 import Svg from "../Svg";
 import AnimationStyle from "../../utils/animation.module.css";
 import { iChatSectionProps } from "./ChatSection";
+import { getRedableTimeStamp } from "../../utils/helpers";
 
 const ChatHeader = ({ isMobile, setShowMessageSection }: iChatSectionProps) => {
   const { typing } = useChat();
@@ -10,7 +11,8 @@ const ChatHeader = ({ isMobile, setShowMessageSection }: iChatSectionProps) => {
     selectedFriends: {
       name,
       profilePicUrl
-    }
+    },
+    selectedFriendOnlineStatus
   } = useFriends();
   const namesInitials = () => name
     .split(' ')
@@ -43,7 +45,12 @@ const ChatHeader = ({ isMobile, setShowMessageSection }: iChatSectionProps) => {
           <span className="text-lg font-semibold capitalize">
             {name}
           </span>
-          {typing && <span className="text-sm font-light animate-bounce">Typing...</span>}
+          {typing ? <span className="text-sm font-light animate-bounce">
+            Typing...
+          </span> : <span className="text-sm font-light">
+            {selectedFriendOnlineStatus === 'online' ?
+              selectedFriendOnlineStatus : `last seen at ${getRedableTimeStamp(selectedFriendOnlineStatus || '')}`}
+          </span>}
         </div>
       </div>
       <div className="flex items-center gap-2">

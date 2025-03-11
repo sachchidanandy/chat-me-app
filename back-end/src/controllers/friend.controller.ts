@@ -7,6 +7,7 @@ import { ErrorResponse } from "@utils/errorResponse";
 import { sendSuccessResponse } from "@utils/wrapper";
 import { Request, Response } from "express";
 import { Types } from "mongoose";
+import { redisStore } from "src";
 
 
 export const getAllFriends = async (req: Request, res: Response) => {
@@ -38,8 +39,9 @@ export const getAllFriends = async (req: Request, res: Response) => {
     }
   ]);
 
-  const message = friends.length ? 'Friends fetched' : 'No friends found';
-  const friendsObject = friends.length ? friends[0]?.friendsDetail : [];
+  const message = friends.length ? 'Friends Fetched' : 'No friends found';
+  let friendsObject = friends.length ? friends[0]?.friendsDetail : [];
+
   return sendSuccessResponse(res, { friendsKeyMap: friendsObject, message });
 };
 
@@ -118,7 +120,13 @@ export const fetchSpecificFriendDetail = async (req: Request, res: Response) => 
     throw new ErrorResponse(SEARCH_QUERY_REQ, BAD_REQUEST);
   }
 
-  const friendDetail = await Friends.aggregate([
+  const friendDetail: {
+    id: string,
+    name: string,
+    pubKey: string,
+    profilePicUrl: string,
+    lastSeen: string
+  }[] = await Friends.aggregate([
     {
       $match: {
         user_id: new Types.ObjectId(userId as string),
@@ -152,14 +160,16 @@ export const fetchSpecificFriendDetail = async (req: Request, res: Response) => 
         id: '$_id',
         name: '$full_name',
         pubKey: '$pub_key',
-        profilePicUrl: '$profile_pic_url'
+        profilePicUrl: '$profile_pic_url',
+        lastSeen: "$last_seen"
       }
     }
   ]);
 
-  if (!friendDetail) {
+  if (!friendDetail?.length) {
     throw new ErrorResponse(NO_FRIEND_FOUND, BAD_REQUEST);
   }
+  const isOnline = (await redisStore.hget("active_users", friendDetail[0].id)) ? true : false;
 
-  return sendSuccessResponse(res, { friendDetail });
+  return sendSuccessResponse(res, { friendDetail: { ...friendDetail[0], isOnline } });
 }

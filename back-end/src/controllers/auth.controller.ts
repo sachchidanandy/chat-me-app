@@ -8,7 +8,7 @@ import { ErrorResponse } from "@utils/errorResponse";
 import { generateToken } from "@utils/jwtToken";
 import { encryptPassword, comparePassword } from "@utils/encryption";
 import { activeUsers } from "./socket.controller";
-import { redisStore } from "src";
+import { redisPub, redisStore } from "src";
 
 export const signup = async (req: Request, res: Response) => {
   const { username, email, fullName, password, publicKey, encryptedPrivateKey } = req.body;
@@ -102,6 +102,7 @@ export const tabClosedLogout = async (req: Request, res: Response) => {
   await User.updateOne({ _id: userId }, { $set: { last_seen: new Date() } });
   activeUsers.delete(userId);
   await redisStore.hdel('active_users', userId);
+  redisPub.publish("user_status_channel", JSON.stringify({ userId, status: "offline" }));
   return sendSuccessResponse(res);
 };
 

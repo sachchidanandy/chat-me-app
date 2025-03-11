@@ -36,7 +36,7 @@ export interface iChatContext {
 const ChatContext = createContext({} as iChatContext);
 
 const ChatProvider = ({ children }: { children: React.ReactNode }) => {
-  const { selectedFriends: { id }, friendsMessageEncKeyMap } = useFriends();
+  const { selectedFriends: { id }, selectedFriendEncKey } = useFriends();
   const { user } = useAuth();
   const pageMap = useRef<Map<string, number>>(new Map());
   const [hasMore, setHasMore] = useState(false);
@@ -48,7 +48,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const sendMessage = (messages: string, fileMetaData: iUploadFileMetaData | null, file: File | null = null) => {
     // Encrypt message
     const { cipherText, nonce } = messages ? encryptMessage(
-      messages, friendsMessageEncKeyMap?.get(id) || ''
+      messages, selectedFriendEncKey || ''
     ) : { cipherText: '', nonce: '' };
 
     const message: iMessage = {
@@ -80,13 +80,13 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     // Decrypt cipherText
     const message: iMessage = {
       ...rest,
-      msg: cipherText ? decryptMessage({ cipherText, nonce }, friendsMessageEncKeyMap?.get(id) || '')! : '',
+      msg: cipherText ? decryptMessage({ cipherText, nonce }, selectedFriendEncKey || '')! : '',
     };
 
     socket.emit('mark_as_read', { senderId: user?.userId || '', recipientId: id });
     messagesMap.current.set(id, [...messagesMap.current.get(id) || [], message]);
     setMessages((prevMessages) => [...prevMessages, message]);
-  }, [id, user?.userId, friendsMessageEncKeyMap]);
+  }, [id, user?.userId, selectedFriendEncKey]);
 
   const fetchMessages = async (limit: number = 50) => {
     const page = pageMap.current.get(id) || 1;
@@ -102,7 +102,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         const reverseMessages = fetchedMessages.slice().reverse();
         const decodedMessages = reverseMessages.map((message: iMessagePayload) => {
           const { cipherText, nonce, ...rest } = message;
-          const msg = cipherText ? decryptMessage({ cipherText, nonce }, friendsMessageEncKeyMap?.get(id) || '') : '';
+          const msg = cipherText ? decryptMessage({ cipherText, nonce }, selectedFriendEncKey || '') : '';
           return { msg, ...rest } as iMessage;
         });
 

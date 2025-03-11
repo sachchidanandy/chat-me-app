@@ -90,6 +90,7 @@ export const fetchUserChatList = async (userId: string) => {
           nonce: "$lastMessage.nonce",
           timestamp: "$lastMessage.timestamp"
         },
+        lastSeen: "$friend_Detail.last_seen"
       }
     },
     // Sort by last message timestamp

@@ -42,18 +42,18 @@ const socketCleanUp = (fileId: string) => {
  * @returns An object with the loading state and the uploadFile function.
  */
 const useFileUpload = (): { loading: string, uploadFile: (file: File, thumbnail?: string, thumbnailName?: string) => Promise<iUploadFileMetaData | null> } => {
-  const { selectedFriends: { id }, friendsMessageEncKeyMap } = useFriends();
+  const { selectedFriendEncKey } = useFriends();
   const { request: uploadImageToS3 } = useFetch('/message/upload-message-attachment');
   const { request: uploadThumbnail } = useFetch('/thumbnail');
   const [loading, setLoading] = useState('');
 
   const uploadFile = useCallback(
     async (file: File, thumbnail?: string, thumbnailName?: string): Promise<iUploadFileMetaData | null> => {
-      if (id && friendsMessageEncKeyMap?.has(id) && file) {
+      if (selectedFriendEncKey && file) {
         setLoading('Encrypting...');
         try {
           // Encrypt file before uploading
-          const { encryptedBlob, iv } = await encryptFile(file, friendsMessageEncKeyMap.get(id)!);
+          const { encryptedBlob, iv } = await encryptFile(file, selectedFriendEncKey!);
           setLoading('Uploading...');
 
           // Upload thumbnail
@@ -126,7 +126,7 @@ const useFileUpload = (): { loading: string, uploadFile: (file: File, thumbnail?
         throw "Missing selected friend ID or file data";
       }
     },
-    [id, friendsMessageEncKeyMap, uploadImageToS3, uploadThumbnail]
+    [selectedFriendEncKey, uploadImageToS3, uploadThumbnail]
   );
 
 
