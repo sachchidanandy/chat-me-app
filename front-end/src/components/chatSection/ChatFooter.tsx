@@ -11,16 +11,20 @@ import { useAuth } from "../../contextProvider/AuthProvider";
 import { eToastType } from "../toast/Toast";
 import { convertBlobToFile, generateUniqueFileName } from "../../utils/helpers";
 import { generateCompressedThumbnail } from "../../utils/filesThumbnail";
+import AudioRecorderModal from "../AudioRecorderModal";
 
 const ChatFooter = () => {
   const { sendMessage, triggerUserStopTypingEvent, triggerUserTypingEvent } = useChat();
-  const [message, setMessage] = useState('');
+  const { loading: fileUploadLoading, uploadFile } = useFileUpload();
   const { handleToastToogle } = useAuth();
+
+  const [message, setMessage] = useState('');
   const [showPicker, setShowPicker] = useState(false);
   const [showFilePicker, setShowFilePicker] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [mediaFile, setMediaFile] = useState<File | Blob | null>(null);
-  const { loading: fileUploadLoading, uploadFile } = useFileUpload();
+  const [recording, setRecording] = useState(false);
+
   const userTypingTimeOutRef = useRef<number | null>(null);
 
   const handleEmojiClick = (emoji: any) => {
@@ -31,26 +35,36 @@ const ChatFooter = () => {
     e.preventDefault();
     e.stopPropagation();
     if (message.trim() !== '' || mediaFile) {
+      triggerUserStopTypingEvent();
       try {
         let file = mediaFile;
         // Check if a mediaFile is a Blob not File
         if (mediaFile instanceof Blob && !(mediaFile instanceof File)) {
           // Convert Blob to File
-          file = convertBlobToFile(mediaFile) as File;
+          file = convertBlobToFile(mediaFile, file?.type === 'audio/webm' ? generateUniqueFileName('file.webm') : '') as File;
         }
 
         let fileMetaData: null | iUploadFileMetaData = null;
         if (file) {
-          const thumbnail = await generateCompressedThumbnail(file as File);
-          const uniqueThumbnailName = generateUniqueFileName((file as File)?.name);
+          const thumbnail = file?.type !== 'audio/webm' ? await generateCompressedThumbnail(file as File) : '';
+          const uniqueThumbnailName = file?.type !== 'audio/webm' ? generateUniqueFileName((file as File)?.name) : '';
           fileMetaData = await uploadFile(file as File, thumbnail, uniqueThumbnailName);
         }
+
         sendMessage(message.trim(), fileMetaData, file as File);
       } catch (err) {
         console.log(err);
         handleToastToogle('Unable to send message', eToastType.error);
       }
+      if (mediaFile) {
+        if (mediaFile?.type !== 'audio/webm') {
+          (document.getElementById('file-preview-modal') as HTMLDialogElement).close();
+        } else {
+          (document.getElementById('audio-recording-modal') as HTMLDialogElement).close();
+        }
+      }
     }
+
     setMessage('');
     setMediaFile(null);
   };
@@ -82,7 +96,7 @@ const ChatFooter = () => {
   };
 
   useEffect(() => {
-    if (mediaFile) {
+    if (mediaFile && mediaFile?.type !== 'audio/webm') {
       (document.getElementById('file-preview-modal') as HTMLDialogElement).showModal();
     } else {
       (document.getElementById('file-preview-modal') as HTMLDialogElement).close();
@@ -121,8 +135,12 @@ const ChatFooter = () => {
           <Svg svgName="send-message" className="ml-2" />
         </button>
       ) : (
-        <button className="btn btn-circle btn-ghost text-white">
-          <Svg svgName="send-voice-message" />
+        <button className="btn btn-circle btn-ghost text-white" disabled={recording} onClick={() => {
+          triggerUserStopTypingEvent();
+          setRecording(true);
+          (document.getElementById('audio-recording-modal') as HTMLDialogElement)?.showModal();
+        }}>
+          <Svg svgName="start-audio-recording" />
         </button>
       )}
 
@@ -153,8 +171,20 @@ const ChatFooter = () => {
 
       <CameraModal
         onFileSelect={(file: Blob) => setMediaFile(file)}
-        onClose={() => { setMediaFile(null); setIsCameraOpen(false); }}
+        onClose={() => {
+          setMediaFile(null);
+          setIsCameraOpen(false);
+        }}
         openCamera={isCameraOpen}
+      />
+      <AudioRecorderModal
+        onPopupClose={() => {
+          setMediaFile(null);
+          setRecording(false);
+        }}
+        onCaptureAudio={(file: Blob | null) => setMediaFile(file)}
+        sendRecordedAudio={handleSendMessage}
+        fileUploadLoading={fileUploadLoading}
       />
 
       <FilePreview

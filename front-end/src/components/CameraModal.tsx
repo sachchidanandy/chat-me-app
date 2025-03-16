@@ -11,12 +11,20 @@ const CameraModal = ({ onClose, onFileSelect, openCamera }: iCameraModalProps) =
   const [isCameraOpen, setIsCameraOpen] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const startCamera = async () => {
     setIsCameraOpen(true);
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error: Error | any) {
+      console.log(error);
+      setIsCameraOpen(false);
+      setError("Error accessing camera, permission denied.");
     }
   };
 
@@ -64,6 +72,13 @@ const CameraModal = ({ onClose, onFileSelect, openCamera }: iCameraModalProps) =
             <div className="flex gap-2 mt-4">
               <button onClick={capturePhoto} className="btn btn-primary">Capture</button>
             </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex flex-col items-center mt-4">
+            <p className="text-red-500">{error}</p>
+            <button onClick={startCamera} className="btn btn-primary mt-4">Retry</button>
           </div>
         )}
       </div>

@@ -51,11 +51,12 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
   delete reqBody.password;
   delete reqBody.publicKey;
   delete reqBody.encryptedPrivateKey;
-
+  const headers = { ...req?.headers }
+  headers.cookie = headers.cookie?.includes('access_token=') ? 'Access token presents in cookies' : 'Access token missing in cookies'
 
   console.error("ERROR LOG : ", {
     url: req?.path,
-    req_header: req?.headers,
+    req_header: headers,
     query_params: req?.query,
     body: reqBody,
     error: error

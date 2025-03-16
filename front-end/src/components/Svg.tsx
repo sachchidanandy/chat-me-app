@@ -206,7 +206,7 @@ const Svg = ({ svgName, className, ...props }: iSvgProps): JSX.Element | null =>
           />
         </svg>
       )
-    case 'send-voice-message':
+    case 'start-audio-recording':
       return (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -331,6 +331,36 @@ const Svg = ({ svgName, className, ...props }: iSvgProps): JSX.Element | null =>
           <path
             fill="currentColor"
             d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10s10-4.49 10-10S17.51 2 12 2m-1 8V6h2v4h3l-4 4l-4-4zm6 7H7v-2h10z"
+          />
+        </svg>
+      )
+    case 'stop-audio-recording':
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          className={"h-7 w-7 opacity-70 " + (className || '')}
+          {...props}
+        >
+          <path
+            fill="currentColor"
+            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2m0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8s8 3.58 8 8s-3.58 8-8 8m4-4H8V8h8z"
+          />
+        </svg>
+      )
+    case 'delete':
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          className={"h-7 w-7 opacity-70 " + (className || '')}
+          {...props}
+        >
+          <path
+            fill="currentColor"
+            d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6zM19 4h-3.5l-1-1h-5l-1 1H5v2h14z"
           />
         </svg>
       )

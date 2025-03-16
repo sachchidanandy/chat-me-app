@@ -14,6 +14,7 @@ const allowedMimeTypes = [
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
   "image/*", // All images
   "video/*", // All videos
+  "audio/webm",
 ];
 
 // Multer Storage (Use Disk Instead of Memory to Reduce RAM Usage)
@@ -22,7 +23,7 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
   fileFilter: (req: Request, file: Express.Multer.File, cb) => {
     if (!allowedMimeTypes.some((type) => file.mimetype.match(type))) {
-      return cb(new Error("Invalid file type. Allowed types: images, videos, PDFs, DOCs, TXTs, PPTs, XLSs."));
+      return cb(new Error(`Invalid file type. Allowed types: images, videos, PDFs, DOCs, TXTs, PPTs, XLSs. But Recieved : ${file.mimetype}`));
     }
     cb(null, true);
   },
