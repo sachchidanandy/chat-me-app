@@ -41,7 +41,7 @@ const ChatFooter = () => {
         // Check if a mediaFile is a Blob not File
         if (mediaFile instanceof Blob && !(mediaFile instanceof File)) {
           // Convert Blob to File
-          file = convertBlobToFile(mediaFile, file?.type === 'audio/webm' ? generateUniqueFileName('file.webm') : '') as File;
+          file = convertBlobToFile(mediaFile, mediaFile?.type === 'audio/webm' ? generateUniqueFileName('file.webm') : undefined) as File;
         }
 
         let fileMetaData: null | iUploadFileMetaData = null;

@@ -65,9 +65,9 @@ const Message = memo(({ style, message }: MessagePropsType) => {
     <div className={chatContainerClass} style={style}>
       <div className={messageClass}>
         {downloadedFile && <FilePreviewContainer file={downloadedFile} />}
-        {attachment && !downloadedFile && thumbnail ? (
+        {attachment && !downloadedFile && (thumbnail || attachment.fileType.startsWith('audio')) ? (
           <div className="flex items-center relative w-20 mb-2">
-            <img src={thumbnail} alt="Blurred Video Preview" width={80} className="blur-xs" />
+            <img src={attachment.fileType.startsWith('audio') ? '/images/audio-file-icon.png' : thumbnail} alt="attached file preview" width={80} className="blur-xs" />
             {
               loading ? <Loader
                 type={eLoaderTypes.SPINNER}
@@ -82,7 +82,7 @@ const Message = memo(({ style, message }: MessagePropsType) => {
           </div>
         ) : null}
         {msg}
-        <p className="float-right text-xs mt-7">{getRedableTimeStamp(timestamp)}</p>
+        <p className={`float-right text-xs ${msg ? 'mt-7' : 'mt-0'}`}>{getRedableTimeStamp(timestamp)}</p>
       </div>
     </div>
   )

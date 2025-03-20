@@ -52,8 +52,8 @@ export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: 
         {
           sender_id: senderId,
           recipient_id: recipientId,
-          cipher_text: cipherText,
-          nonce: nonce,
+          cipher_text: cipherText || '',
+          nonce: nonce || '',
           status: 'sent',
           attachment: attachment
         }

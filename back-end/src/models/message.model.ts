@@ -10,13 +10,13 @@ export interface iUploadFileMetaData {
   uploadedAt: Date;
   expiredAt: Date;
   iv: string;
-  thumbnailName: string;
+  thumbnailName?: string;
 }
 export interface IMessage {
   sender_id: Schema.Types.ObjectId;
   recipient_id: Schema.Types.ObjectId;
-  cipher_text: string;
-  nonce: string;
+  cipher_text?: string;
+  nonce?: string;
   attachment?: iUploadFileMetaData;
   timestamp: Date;
   status: MessageStatus;
@@ -25,8 +25,8 @@ export interface IMessage {
 const messageSchema = new Schema({
   sender_id: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
   recipient_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  cipher_text: { type: String, required: true },
-  nonce: { type: String, required: true },
+  cipher_text: { type: String },
+  nonce: { type: String },
   attachment: {
     fileUrl: { type: String },
     fileName: { type: String },

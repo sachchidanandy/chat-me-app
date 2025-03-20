@@ -26,4 +26,4 @@ export default tryCatchWrapper(async (req: Request, res: Response, next: NextFun
   }
 
   next();
-})
+});

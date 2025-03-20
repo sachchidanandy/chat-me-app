@@ -36,6 +36,13 @@ export const FilePreviewContainer = memo(({ file }: { file: File | Blob }) => {
       <iframe src={fileURL} className="w-full h-full pt-2" title="PDF Preview"></iframe>
       <p className="mt-4 text-sm">{file instanceof File ? file.name : "Unsupported file type"}</p>
     </div>
+  ) : fileType === "audio/webm" ? (
+    <div className="my-1 flex justify-center">
+      <audio controls autoPlay className="max-w-full">
+        <source src={fileURL} type={fileType} />
+        Your browser does not support the audio element.
+      </audio>
+    </div>
   ) : (
     <div className="size-80 my-2 sm:size-96 flex justify-center flex-col">
       <Svg svgName="file" className="size-80" />
