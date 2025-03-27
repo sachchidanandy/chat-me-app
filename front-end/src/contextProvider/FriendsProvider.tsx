@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useReducer } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from "react";
 import useFetch from "../hooks/useFetch";
 import { useAuth } from "./AuthProvider";
 import Loader from "../components/Loader";
@@ -6,6 +6,7 @@ import { iActionType } from "../types/common";
 import { getMessageEncryptionSecret, getPrivateKey } from "../utils/encryptionKeys";
 import { decryptMessage } from "../utils/messagesEncryption";
 import socket from "../utils/socket";
+import { iUploadFileMetaData } from "../hooks/useFileUpload";
 
 export interface iFriendsDetail {
   id: string;
@@ -20,6 +21,7 @@ export interface iFriendsDetail {
 export interface iChatListFriends extends iFriendsDetail {
   lastMessage: string;
   lastChatTime: string;
+  unSeenMessageCount: number;
 }
 
 interface iChatListResponse extends iFriendsDetail {
@@ -27,6 +29,8 @@ interface iChatListResponse extends iFriendsDetail {
     cipherText: string;
     nonce: string;
     timestamp: string;
+    attachment: iUploadFileMetaData;
+    status: string;
   }
 }
 
@@ -53,6 +57,9 @@ export interface iFriendsContext {
   chatListLoading: boolean;
   selectedFriendEncKey: string | null;
   selectedFriendOnlineStatus: string | null;
+  getEncryptionKey: (id: string) => string | null;
+  getOnlineStatus: (id: string) => string | null;
+  triggerUpdateChatList: (updatedChatMessage: iChatListFriends, encryptionKeys: string, incrementUnreadMessages?: boolean) => void;
 };
 
 const FriendsContext = createContext<iFriendsContext>({} as iFriendsContext);
@@ -114,6 +121,7 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
     friendsOnlineStatus: null,
   });
   const { chatList, selectedFriends, friendRequests, friendsMessageEncKeyMap, friendsOnlineStatus } = state;
+  console.log("=== OUT SIDE ====", chatList)
   const { loading, request: fetchFriendsKeyMap } = useFetch('/friend/all');
   const { loading: fetchingFriendLoading, request: searchFriendDetails } = useFetch('/friend/details');
   const { loading: friendRequestLoading, request: getFriendRequest } = useFetch('/friend/request');
@@ -122,7 +130,9 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
   const handleSelectFriend = async (id: string) => {
     const selectedFriend = chatList.find((friend: iChatListFriends) => friend.id === id);
     if (selectedFriend) {
+      selectedFriend.unSeenMessageCount = 0;
       dispatch({ type: 'SET_SELECTED_FRIENDS', payload: { ...selectedFriend, valueToShow: friendsOnlineStatus?.get(id)! } });
+      dispatch({ type: 'SET_CHAT_LIST', payload: [selectedFriend, ...chatList.filter((friend: iChatListFriends) => friend.id !== id)] });
     } else {
       const { data, error } = await searchFriendDetails({
         params: {
@@ -132,7 +142,7 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
       });
 
       if (data && !error && Object.keys(data.friendDetail).length) {
-        const friendsDetail = { ...data.friendDetail, lastMessage: '', lastChatTime: Date.now().toString() } as iChatListFriends;
+        const friendsDetail = { ...data.friendDetail, lastMessage: '', lastChatTime: Date.now().toString(), unSeenMessageCount: 0 } as iChatListFriends;
 
         if (!friendsMessageEncKeyMap?.has(friendsDetail.id)) {
           const newFriendsMessageEncKeyMap = new Map(friendsMessageEncKeyMap);
@@ -152,22 +162,52 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
     }
   };
 
+  const triggerUpdateChatList = useCallback((updatedChatMessage: iChatListFriends, encryptionKeys: string, incrementUnreadMessages: boolean = false) => {
+    let newMessage = null;
+
+    const newChatList = chatList.filter((friend: iChatListFriends) => {
+      if (friend.id === updatedChatMessage.id) {
+        newMessage = {
+          ...friend,
+          ...updatedChatMessage,
+          ...(incrementUnreadMessages ? { unSeenMessageCount: friend.unSeenMessageCount + 1 } : {})
+        };
+        return false;
+      }
+      return true;
+    });
+
+    dispatch({ type: 'SET_CHAT_LIST', payload: [newMessage ? newMessage : { ...updatedChatMessage, unSeenMessageCount: 1 }, ...newChatList] });
+    if (!friendsMessageEncKeyMap?.has(updatedChatMessage.id) && encryptionKeys) {
+      const newFriendsMessageEncKeyMap = new Map(friendsMessageEncKeyMap);
+      newFriendsMessageEncKeyMap.set(updatedChatMessage.id, encryptionKeys);
+
+      dispatch({ type: 'SET_FRIENDS_SHARED_KEYS', payload: newFriendsMessageEncKeyMap });
+    }
+    if (!friendsOnlineStatus?.has(updatedChatMessage.id)) {
+      const newFriendsOnlineStatus = new Map(friendsOnlineStatus);
+      newFriendsOnlineStatus.set(updatedChatMessage.id, updatedChatMessage?.isOnline ? 'online' : updatedChatMessage?.lastSeen);
+      dispatch({ type: 'SET_FRIENDS_ONLINE_STATUS', payload: newFriendsOnlineStatus });
+    }
+  }, [chatList, friendsMessageEncKeyMap, friendsOnlineStatus]);
+
   const fetchChatList = async () => {
     const { data, error } = await getChatList();
     const friendsOnlineStatusMap = new Map<string, string>();
     if (data && data?.chatList?.length) {
 
       const decodedChatList = data.chatList.reduce((acc: iChatListFriends[], chat: iChatListResponse) => {
-        const { lastMessage: { cipherText, nonce, timestamp }, ...rest } = chat;
+        const { lastMessage: { cipherText, nonce, timestamp, attachment, status }, ...rest } = chat;
         if (friendsMessageEncKeyMap?.has(chat.id)) {
           const valueToShow = chat.isOnline ? 'online' : chat.lastSeen;
           acc.push({
             ...rest,
-            lastMessage: decryptMessage(
+            lastMessage: cipherText && nonce ? decryptMessage(
               { cipherText, nonce }, friendsMessageEncKeyMap?.get(chat.id)!
-            ) as string,
+            ) as string : attachment?.fileName || '',
             lastChatTime: timestamp,
             valueToShow,
+            unSeenMessageCount: status === 'sent' ? 1 : 0,
           });
           friendsOnlineStatusMap.set(chat.id, valueToShow);
         }
@@ -239,6 +279,9 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
     };
   }, [friendsOnlineStatus]);
 
+  const getEncryptionKey = useCallback((id: string) => friendsMessageEncKeyMap?.get(id) || null, [friendsMessageEncKeyMap]);
+  const getOnlineStatus = useCallback((id: string) => friendsOnlineStatus?.get(id) || null, [friendsOnlineStatus]);
+
   return (
     <FriendsContext.Provider value={{
       selectedFriends,
@@ -248,6 +291,9 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
       chatListLoading,
       selectedFriendEncKey,
       selectedFriendOnlineStatus,
+      getEncryptionKey,
+      getOnlineStatus,
+      triggerUpdateChatList,
       friends: chatList,
       setSelectedFriends: handleSelectFriend,
     }}>

@@ -38,7 +38,7 @@ export const FilePreviewContainer = memo(({ file }: { file: File | Blob }) => {
     </div>
   ) : fileType === "audio/webm" ? (
     <div className="my-1 flex justify-center">
-      <audio controls autoPlay className="max-w-full">
+      <audio controls className="max-w-full">
         <source src={fileURL} type={fileType} />
         Your browser does not support the audio element.
       </audio>

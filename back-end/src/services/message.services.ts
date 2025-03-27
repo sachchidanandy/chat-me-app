@@ -88,7 +88,9 @@ export const fetchUserChatList = async (userId: string) => {
         lastMessage: {
           cipherText: "$lastMessage.cipher_text",
           nonce: "$lastMessage.nonce",
-          timestamp: "$lastMessage.timestamp"
+          attachment: "$lastMessage.attachment",
+          timestamp: "$lastMessage.timestamp",
+          status: "$lastMessage.status",
         },
         lastSeen: "$friend_Detail.last_seen"
       }

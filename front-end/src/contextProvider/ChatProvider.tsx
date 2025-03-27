@@ -1,10 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { useFriends } from "./FriendsProvider";
+import { iChatListFriends, useFriends } from "./FriendsProvider";
 import { useAuth } from "./AuthProvider";
 import { decryptMessage, encryptMessage } from "../utils/messagesEncryption";
 import socket from "../utils/socket";
 import useFetch from "../hooks/useFetch";
 import { iUploadFileMetaData } from "../hooks/useFileUpload";
+import { getMessageEncryptionSecret, getPrivateKey } from "../utils/encryptionKeys";
 
 export interface iMessage {
   id: string;
@@ -36,7 +37,7 @@ export interface iChatContext {
 const ChatContext = createContext({} as iChatContext);
 
 const ChatProvider = ({ children }: { children: React.ReactNode }) => {
-  const { selectedFriends: { id }, selectedFriendEncKey } = useFriends();
+  const { selectedFriends: { id }, selectedFriendEncKey, getEncryptionKey, triggerUpdateChatList, getOnlineStatus } = useFriends();
   const { user } = useAuth();
   const pageMap = useRef<Map<string, number>>(new Map());
   const [hasMore, setHasMore] = useState(false);
@@ -44,6 +45,21 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [messages, setMessages] = useState<iMessage[]>([]);
   const [typing, setTyping] = useState(false);
   const { loading: loadingMessages, request: getMessages } = useFetch(`/message/${id}`);
+  const { request: fetchSpecificFriendDetail } = useFetch('/friend/details');
+
+  const fetchFriendDetailFromServer = async (friendId: string, encryptionKeys: string): Promise<{ friendsDetail: iChatListFriends, sharedEncryptionKey: string } | null> => {
+    const { data, error } = await fetchSpecificFriendDetail({ params: { id: friendId } });
+    if (data && !error && Object.keys(data.friendDetail).length) {
+      const friendsDetail = { ...data.friendDetail, lastMessage: '', lastChatTime: Date.now().toString() } as iChatListFriends;
+      const sharedEncryptionKey = encryptionKeys || getMessageEncryptionSecret(friendsDetail.pubKey, getPrivateKey()!);
+      return {
+        friendsDetail,
+        sharedEncryptionKey
+      }
+    }
+
+    return null;
+  }
 
   const sendMessage = (messages: string, fileMetaData: iUploadFileMetaData | null, file: File | null = null) => {
     // Encrypt message
@@ -71,22 +87,39 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     socket.emit('send_message', messagePayload);
     messagesMap.current.set(id, [...messagesMap.current.get(id) || [], message]);
+    triggerUpdateChatList(
+      { id, lastMessage: messages || fileMetaData?.fileName || '', lastChatTime: Date.now().toString() } as iChatListFriends,
+      ''
+    );
     setMessages((prevMessages) => [...prevMessages, message]);
   };
 
-  const handleRecieveMessages = useCallback((messagePayload: iMessagePayload) => {
+  const handleRecieveMessages = useCallback(async (messagePayload: iMessagePayload) => {
     const { cipherText, nonce, ...rest } = messagePayload;
+    let encryptionKeys = rest.senderId === id ? selectedFriendEncKey : getEncryptionKey(rest.senderId);
+    // Check if chatlist have user or not
+    let chatListHaveUser = getOnlineStatus(rest.senderId) ? { id: rest.senderId } as iChatListFriends : null;
+
+    // Check if encryptin key and friend details exists else fetch from server
+    if (!encryptionKeys || !chatListHaveUser) {
+      const friendsDetailWithKey = await fetchFriendDetailFromServer(rest.senderId, encryptionKeys || '');
+      if (!friendsDetailWithKey) return;
+      const { friendsDetail, sharedEncryptionKey } = friendsDetailWithKey;
+      chatListHaveUser = friendsDetail;
+      encryptionKeys = sharedEncryptionKey;
+    }
 
     // Decrypt cipherText
     const message: iMessage = {
       ...rest,
-      msg: cipherText ? decryptMessage({ cipherText, nonce }, selectedFriendEncKey || '')! : '',
+      msg: cipherText ? decryptMessage({ cipherText, nonce }, encryptionKeys || '')! : '',
     };
 
-    socket.emit('mark_as_read', { senderId: user?.userId || '', recipientId: id });
-    messagesMap.current.set(id, [...messagesMap.current.get(id) || [], message]);
-    setMessages((prevMessages) => [...prevMessages, message]);
-  }, [id, user?.userId, selectedFriendEncKey]);
+    messagesMap.current.set(rest.senderId, [...messagesMap.current.get(rest.senderId) || [], message]);
+    chatListHaveUser.lastMessage = message.msg || message?.attachment?.fileName || '';
+    triggerUpdateChatList(chatListHaveUser, encryptionKeys, !(rest.senderId === id));
+    rest.senderId === id && setMessages((prevMessages) => [...prevMessages, message]);
+  }, [id, user?.userId, selectedFriendEncKey, triggerUpdateChatList]);
 
   const fetchMessages = async (limit: number = 50) => {
     const page = pageMap.current.get(id) || 1;
