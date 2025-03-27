@@ -5,7 +5,7 @@ import animationStyle from '../../utils/animation.module.css';
 import { getRedableTimeStamp } from "../../utils/helpers";
 
 interface iFriendsCardProps {
-  friend: iChatListFriends,
+  friend: Partial<iChatListFriends>,
   selected: boolean,
 }
 
@@ -31,7 +31,7 @@ const FriendsCard = ({ friend, selected }: iFriendsCardProps) => {
         <div className="card-body p-2 gap-1 max-w-[calc(100%-4rem)] pb-0">
           <span className="font-bold text-base capitalize">
             {name}
-            <span className="font-normal text-xs float-right">{getRedableTimeStamp(lastChatTime)}</span>
+            {lastChatTime && <span className="font-normal text-xs float-right">{getRedableTimeStamp(lastChatTime)}</span>}
           </span>
           <p className="font-light text-sm truncate">
             {lastMessage}

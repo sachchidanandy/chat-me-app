@@ -56,6 +56,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (friendId && !chatListLoading) {
       setSelectedFriends(friendId);
+      setSearchQuery('');
     }
   }, [friendId, chatListLoading]);
 

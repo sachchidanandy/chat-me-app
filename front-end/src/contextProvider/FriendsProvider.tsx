@@ -15,7 +15,7 @@ export interface iFriendsDetail {
   profilePicUrl: string;
   lastSeen: string;
   isOnline: boolean;
-  valueToShow: string;
+  statusToShow: string;
 };
 
 export interface iChatListFriends extends iFriendsDetail {
@@ -121,7 +121,6 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
     friendsOnlineStatus: null,
   });
   const { chatList, selectedFriends, friendRequests, friendsMessageEncKeyMap, friendsOnlineStatus } = state;
-  console.log("=== OUT SIDE ====", chatList)
   const { loading, request: fetchFriendsKeyMap } = useFetch('/friend/all');
   const { loading: fetchingFriendLoading, request: searchFriendDetails } = useFetch('/friend/details');
   const { loading: friendRequestLoading, request: getFriendRequest } = useFetch('/friend/request');
@@ -130,9 +129,8 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
   const handleSelectFriend = async (id: string) => {
     const selectedFriend = chatList.find((friend: iChatListFriends) => friend.id === id);
     if (selectedFriend) {
-      selectedFriend.unSeenMessageCount = 0;
-      dispatch({ type: 'SET_SELECTED_FRIENDS', payload: { ...selectedFriend, valueToShow: friendsOnlineStatus?.get(id)! } });
-      dispatch({ type: 'SET_CHAT_LIST', payload: [selectedFriend, ...chatList.filter((friend: iChatListFriends) => friend.id !== id)] });
+      dispatch({ type: 'SET_SELECTED_FRIENDS', payload: { ...selectedFriend, statusToShow: friendsOnlineStatus?.get(id)! } });
+      dispatch({ type: 'SET_CHAT_LIST', payload: [...chatList.map((friend: iChatListFriends) => (friend.id === id ? { ...friend, unSeenMessageCount: 0 } : friend))] });
     } else {
       const { data, error } = await searchFriendDetails({
         params: {
@@ -199,17 +197,17 @@ const FriendsProvider = ({ children }: iFriendsProvider) => {
       const decodedChatList = data.chatList.reduce((acc: iChatListFriends[], chat: iChatListResponse) => {
         const { lastMessage: { cipherText, nonce, timestamp, attachment, status }, ...rest } = chat;
         if (friendsMessageEncKeyMap?.has(chat.id)) {
-          const valueToShow = chat.isOnline ? 'online' : chat.lastSeen;
+          const statusToShow = chat.isOnline ? 'online' : chat.lastSeen;
           acc.push({
             ...rest,
             lastMessage: cipherText && nonce ? decryptMessage(
               { cipherText, nonce }, friendsMessageEncKeyMap?.get(chat.id)!
             ) as string : attachment?.fileName || '',
             lastChatTime: timestamp,
-            valueToShow,
+            statusToShow,
             unSeenMessageCount: status === 'sent' ? 1 : 0,
           });
-          friendsOnlineStatusMap.set(chat.id, valueToShow);
+          friendsOnlineStatusMap.set(chat.id, statusToShow);
         }
         return acc;
       }, [] as iChatListFriends[]);
