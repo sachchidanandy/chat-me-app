@@ -85,6 +85,36 @@ export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: 
       io.to(activeUsers.get(recipientId)!).emit('message_seen', { senderId });
     });
 
+    // Handle user requesting socket ID of another user
+    socket.on("fetch-user-socket-id", ({ targetUserId }, callback) => {
+      const targetSocketId = activeUsers.get(targetUserId);
+      callback(targetSocketId || null);
+    });
+
+    socket.on("call-user", ({ targetSocketId, offer, callerDetails }) => {
+      io.to(socket.id).emit("call-ringing");
+      io.to(targetSocketId).emit("incoming-call", { from: socket.id, offer, callerDetails });
+    });
+
+    socket.on("answer-call", ({ targetSocketId, answer }) => {
+      io.to(targetSocketId).emit("call-answered", { from: socket.id, answer });
+    });
+
+    socket.on("ice-candidate", ({ targetSocketId, candidate }) => {
+      io.to(targetSocketId).emit("ice-candidate", { from: socket.id, candidate });
+    });
+
+    socket.on("end-call", ({ targetSocketId }) => {
+      io.to(targetSocketId).emit("call-ended", { from: socket.id });
+    });
+
+    socket.on("reject-call", ({ targetSocketId }) => {
+      // const targetSocket = onlineUsers.get(targetUserId);
+      // if (targetSocket) {
+      io.to(targetSocketId).emit("call-rejected");
+      // }
+    });
+
     // Unregister a user
     socket.on('user_offline', async (userId: string) => {
       activeUsers.delete(userId);

@@ -3,21 +3,20 @@ import { useFriends } from "../../contextProvider/FriendsProvider";
 import Svg from "../Svg";
 import AnimationStyle from "../../utils/animation.module.css";
 import { iChatSectionProps } from "./ChatSection";
-import { getRedableTimeStamp } from "../../utils/helpers";
+import { getNamesInitials, getRedableTimeStamp } from "../../utils/helpers";
+import { useAudioCall } from "../../contextProvider/AudioCallProvider";
 
 const ChatHeader = ({ isMobile, setShowMessageSection }: iChatSectionProps) => {
   const { typing } = useChat();
+  const { startCall, isAlreadyInCall } = useAudioCall();
   const {
     selectedFriends: {
       name,
-      profilePicUrl
+      profilePicUrl,
+      id,
     },
     selectedFriendOnlineStatus
   } = useFriends();
-  const namesInitials = () => name
-    .split(' ')
-    .map((name) => name.charAt(0).toUpperCase())
-    .join('');
 
   return (
     <div
@@ -38,7 +37,7 @@ const ChatHeader = ({ isMobile, setShowMessageSection }: iChatSectionProps) => {
               alt={`${name}-profile-pic`} />
             : <div
               className="size-14 rounded-full bg-blue-600 text-white flex justify-center items-center font-bold text-2xl self-center">
-              {namesInitials() || ''}
+              {getNamesInitials(name) || ''}
             </div>
         }
         <div className="flex flex-col">
@@ -54,18 +53,26 @@ const ChatHeader = ({ isMobile, setShowMessageSection }: iChatSectionProps) => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <button className="btn btn-ghost btn-circle" id="phone-call-button">
-          <Svg
-            className="fill-none stroke-current"
-            viewBox="0 0 24 24"
-            svgName="normalCall" />
-        </button>
-        <button className="btn btn-ghost btn-circle" id="video-call-button">
-          <Svg
-            className="fill-none stroke-current"
-            viewBox="0 0 24 24"
-            svgName="videoCall" />
-        </button>
+        {!isAlreadyInCall && (
+          <button
+            className="btn btn-ghost btn-circle"
+            id="phone-call-button"
+            disabled={isAlreadyInCall}
+            onClick={() => startCall(id, { userId: id, username: '', fullName: name, profilePicUrl })}>
+            <Svg
+              className="fill-none stroke-current"
+              viewBox="0 0 24 24"
+              svgName="normalCall" />
+          </button>
+        )}
+        {!isAlreadyInCall && (
+          <button className="btn btn-ghost btn-circle" id="video-call-button">
+            <Svg
+              className="fill-none stroke-current"
+              viewBox="0 0 24 24"
+              svgName="videoCall" />
+          </button>
+        )}
         <button className="btn btn-ghost btn-circle" id="search-message-button">
           <Svg svgName="search" className="size-6" />
         </button>

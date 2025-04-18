@@ -4,6 +4,7 @@ import { NavLink } from "react-router";
 import { useAuth } from "../contextProvider/AuthProvider";
 import Svg from "./Svg";
 import { useFriends } from "../contextProvider/FriendsProvider";
+import { getNamesInitials } from "../utils/helpers";
 
 // create a navigation bar
 const Navbar = () => {
@@ -11,11 +12,6 @@ const Navbar = () => {
   const { friendRequests } = useFriends();
   const { userId, profilePicUrl } = user || {};
   const pendingRequests = friendRequests?.pendingRequests;
-
-  const namesInitials = () => user?.fullName
-    .split(' ')
-    .map((name) => name.charAt(0).toUpperCase())
-    .join('');
 
   return userId ? (
     <nav className="navbar bg-primary text-primary-content">
@@ -31,7 +27,7 @@ const Navbar = () => {
           <div tabIndex={1} role="button" className="btn btn-ghost btn-circle avatar">
             <div className="w-14 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 text-center content-center">
               {
-                profilePicUrl ? <img alt="profile-pic" src={profilePicUrl} /> : <span className="text-2xl font-bold">{namesInitials() || ''}</span>
+                profilePicUrl ? <img alt="profile-pic" src={profilePicUrl} /> : <span className="text-2xl font-bold">{getNamesInitials(user?.fullName) || ''}</span>
               }
             </div>
           </div>

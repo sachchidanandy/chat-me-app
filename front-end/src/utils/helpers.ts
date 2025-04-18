@@ -26,6 +26,13 @@ export const getRedableTimeStamp = (chatTime: string) => {
     : timeStamp.toLocaleString('en-US', withDateTime as Intl.DateTimeFormatOptions);
 };
 
+/**
+ * Generates a unique 6-character string using a random number converted to a string of base 36.
+ * @returns {string} A unique 6-character string.
+ */
+export const generateUniqueString = (): string => {
+  return Math.random().toString(36).substring(2, 8); // 6-char random string
+}
 
 /**
  * Generates a unique file name based on the current timestamp and a 6-character random string.
@@ -35,7 +42,7 @@ export const getRedableTimeStamp = (chatTime: string) => {
  */
 export const generateUniqueFileName = (originalName: string = ''): string => {
   const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(2, 8); // 6-char random string
+  const randomString = generateUniqueString();
   const extension = originalName?.split(".").pop() || 'jpg';
   return `${timestamp}-${randomString}.${extension}`;
 };
@@ -59,3 +66,8 @@ export const convertBlobToFile = (
   const file = new File([blob], fileName, { type: fileType });
   return file;
 };
+
+export const getNamesInitials = (fullName = '') => fullName
+  .split(' ')
+  .map((name) => name.charAt(0).toUpperCase())
+  .join('');

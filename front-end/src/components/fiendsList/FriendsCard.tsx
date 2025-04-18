@@ -2,7 +2,7 @@ import { Link } from "react-router";
 
 import { iChatListFriends } from "../../contextProvider/FriendsProvider";
 import animationStyle from '../../utils/animation.module.css';
-import { getRedableTimeStamp } from "../../utils/helpers";
+import { getNamesInitials, getRedableTimeStamp } from "../../utils/helpers";
 
 interface iFriendsCardProps {
   friend: Partial<iChatListFriends>,
@@ -13,7 +13,6 @@ const FriendsCard = ({ friend, selected }: iFriendsCardProps) => {
   const { id, name, profilePicUrl, lastChatTime, lastMessage, unSeenMessageCount } = friend;
 
   const bgClasses = selected ? ' bg-primary text-primary-content' : ' text-base-content btn-ghost';
-  const namesInitials = () => name?.split(' ').map((name) => name.charAt(0).toUpperCase()).join('');
 
   return (
     <Link to={`/${id}`} className={animationStyle.fadeIn}>
@@ -26,7 +25,7 @@ const FriendsCard = ({ friend, selected }: iFriendsCardProps) => {
           />
         </figure> : <div
           className="size-14 rounded-full bg-blue-600 text-white flex justify-center items-center font-bold text-2xl self-center">
-          {namesInitials() || ''}
+          {getNamesInitials(name) || ''}
         </div>}
         <div className="card-body p-2 gap-1 max-w-[calc(100%-4rem)] pb-0">
           <span className="font-bold text-base capitalize">

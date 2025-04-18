@@ -7,6 +7,7 @@ import FriendsProvider from "./contextProvider/FriendsProvider";
 import Loader from "./components/Loader";
 import ChatProvider from "./contextProvider/ChatProvider";
 import { getPrivateKey } from "./utils/encryptionKeys";
+import AudioCallProvider from "./contextProvider/AudioCallProvider";
 
 const Navbar = lazy(() => import("./components/Navbar"));
 const Signup = lazy(() => import("./pages/Signup"));
@@ -29,24 +30,26 @@ function App() {
     <AuthContextProvider>
       <FriendsProvider>
         <ChatProvider>
-          <BrowserRouter>
-            <Suspense fallback={<Loader />}>
-              <Navbar />
-              <div
-                className="flex flex-col items-center justify-center align-center h-full w-full">
-                <Routes>
-                  <Route
-                    path="/:friendId?"
-                    element={<ProtectedRoute element={
-                      Dashboard
-                    } />
-                    } />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Signup />} />
-                </Routes>
-              </div>
-            </Suspense>
-          </BrowserRouter>
+          <AudioCallProvider>
+            <BrowserRouter>
+              <Suspense fallback={<Loader />}>
+                <Navbar />
+                <div
+                  className="flex flex-col items-center justify-center align-center h-full w-full">
+                  <Routes>
+                    <Route
+                      path="/:friendId?"
+                      element={<ProtectedRoute element={
+                        Dashboard
+                      } />
+                      } />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Signup />} />
+                  </Routes>
+                </div>
+              </Suspense>
+            </BrowserRouter>
+          </AudioCallProvider>
         </ChatProvider>
       </FriendsProvider>
     </AuthContextProvider>
