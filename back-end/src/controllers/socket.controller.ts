@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import Message, { IMessage, iUploadFileMetaData, MessageStatus } from "../models/message.model";
+import Message, { iUploadFileMetaData, MessageStatus } from "../models/message.model";
 import Redis from "ioredis";
 import User from "@models/user.model";
 
@@ -86,33 +86,69 @@ export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: 
     });
 
     // Handle user requesting socket ID of another user
-    socket.on("fetch-user-socket-id", ({ targetUserId }, callback) => {
-      const targetSocketId = activeUsers.get(targetUserId);
-      callback(targetSocketId || null);
+    socket.on("fetch_user_socket_id", async ({ targetUserId }, callback) => {
+      let targetSocketId = activeUsers.get(targetUserId) || null;
+      // try to find it in redis store
+      if (!targetSocketId) {
+        targetSocketId = await redisStore.hget("active_users", targetUserId);
+      }
+      callback(targetSocketId);
     });
 
-    socket.on("call-user", ({ targetSocketId, offer, callerDetails }) => {
-      io.to(socket.id).emit("call-ringing");
-      io.to(targetSocketId).emit("incoming-call", { from: socket.id, offer, callerDetails });
+    socket.on("call_user", ({ targetSocketId, offer, callerDetails }) => {
+      if (io.of("/").sockets.has(targetSocketId)) {
+        io.to(targetSocketId).emit("incoming_call", { from: socket.id, offer, callerDetails });
+      } else {
+        redisPub.publish(
+          'voice_call_channel',
+          JSON.stringify({ event: 'incoming_call', targetSocketId, offer, callerDetails, from: socket.id })
+        );
+      }
+      io.to(socket.id).emit("call_ringing");
     });
 
-    socket.on("answer-call", ({ targetSocketId, answer }) => {
-      io.to(targetSocketId).emit("call-answered", { from: socket.id, answer });
+    socket.on("answer_call", ({ targetSocketId, answer }) => {
+      if (io.of("/").sockets.has(targetSocketId)) {
+        io.to(targetSocketId).emit("call_answered", { from: socket.id, answer });
+      } else {
+        redisPub.publish(
+          'voice_call_channel',
+          JSON.stringify({ event: 'call_answered', targetSocketId, from: socket.id, answer })
+        );
+      }
     });
 
-    socket.on("ice-candidate", ({ targetSocketId, candidate }) => {
-      io.to(targetSocketId).emit("ice-candidate", { from: socket.id, candidate });
+    socket.on("ice_candidate", ({ targetSocketId, candidate }) => {
+      if (io.of("/").sockets.has(targetSocketId)) {
+        io.to(targetSocketId).emit("ice_candidate", { from: socket.id, candidate });
+      } else {
+        redisPub.publish(
+          'voice_call_channel',
+          JSON.stringify({ event: 'ice_candidate', targetSocketId, from: socket.id, candidate })
+        );
+      }
     });
 
-    socket.on("end-call", ({ targetSocketId }) => {
-      io.to(targetSocketId).emit("call-ended", { from: socket.id });
+    socket.on("end_call", ({ targetSocketId }) => {
+      if (io.of("/").sockets.has(targetSocketId)) {
+        io.to(targetSocketId).emit("call_ended", { from: socket.id });
+      } else {
+        redisPub.publish(
+          'voice_call_channel',
+          JSON.stringify({ event: 'call_ended', targetSocketId, from: socket.id })
+        );
+      }
     });
 
-    socket.on("reject-call", ({ targetSocketId }) => {
-      // const targetSocket = onlineUsers.get(targetUserId);
-      // if (targetSocket) {
-      io.to(targetSocketId).emit("call-rejected");
-      // }
+    socket.on("reject_call", ({ targetSocketId }) => {
+      if (io.of("/").sockets.has(targetSocketId)) {
+        io.to(targetSocketId).emit("call_rejected");
+      } else {
+        redisPub.publish(
+          'voice_call_channel',
+          JSON.stringify({ event: 'call_rejected', targetSocketId })
+        );
+      }
     });
 
     // Unregister a user
@@ -127,48 +163,69 @@ export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: 
 };
 
 export const handleRedisSubscription = (io: Server, redisSub: Redis) => {
-  redisSub.subscribe("chat_channel");
-  redisSub.subscribe("typing_channel");
-  redisSub.subscribe("stop_typing_channel");
-  redisSub.subscribe("user_status_channel");
+  redisSub.subscribe('chat_channel');
+  redisSub.subscribe('typing_channel');
+  redisSub.subscribe('stop_typing_channel');
+  redisSub.subscribe('user_status_channel');
+  redisSub.subscribe('voice_call_channel');
 
-  redisSub.on("message", async (channel, message) => {
+  redisSub.on('message', async (channel, message) => {
     const messageData = JSON.parse(message);
-    if (channel === 'chat_channel') {
-      const { senderId, recipientId, ...msg } = messageData;
-      if (activeUsers.has(recipientId)) {
-        const newMessage = await Message.findOneAndUpdate(
-          { sender_id: senderId, recipient_id: recipientId, status: "sent" },
-          { $set: { status: "delivered" } },
-          { new: true }
-        );
-        io.to(activeUsers.get(recipientId)!).emit('new_message', {
-          ...msg,
-          id: newMessage?._id,
-          status: newMessage?.status,
-          senderId,
-          recipientId,
-          timestamp: newMessage?.timestamp,
-        });
-      }
-    } else if (channel === 'typing_channel') {
-      const { userId, recipientId } = messageData;
-      if (activeUsers.has(recipientId)) {
-        io.to(activeUsers.get(recipientId)!).emit('user_typing', { senderId: userId });
-      }
-    } else if (channel === 'stop_typing_channel') {
-      const { userId, recipientId } = messageData;
-      if (activeUsers.has(recipientId)) {
-        io.to(activeUsers.get(recipientId)!).emit('user_stop_typing', { senderId: userId });
-      }
-    } else if (channel === 'user_status_channel') {
-      const { userId, status } = JSON.parse(message) ?? {};
-      if (userId && status) {
-        console.log(`User ${userId} is now ${status}`);
 
-        // You can now broadcast this to connected clients
-        io.emit("user_status_update", { userId, status });
+    switch (channel) {
+      case 'chat_channel': {
+        const { senderId, recipientId, ...msg } = messageData;
+        if (activeUsers.has(recipientId)) {
+          const newMessage = await Message.findOneAndUpdate(
+            { sender_id: senderId, recipient_id: recipientId, status: "sent" },
+            { $set: { status: "delivered" } },
+            { new: true }
+          );
+          io.to(activeUsers.get(recipientId)!).emit('new_message', {
+            ...msg,
+            id: newMessage?._id,
+            status: newMessage?.status,
+            senderId,
+            recipientId,
+            timestamp: newMessage?.timestamp,
+          });
+        }
       }
+        break;
+      case 'typing_channel': {
+        const { userId, recipientId } = messageData;
+        if (activeUsers.has(recipientId)) {
+          io.to(activeUsers.get(recipientId)!).emit('user_typing', { senderId: userId });
+        }
+      }
+        break;
+      case 'stop_typing_channel': {
+        const { userId, recipientId } = messageData;
+        if (activeUsers.has(recipientId)) {
+          io.to(activeUsers.get(recipientId)!).emit('user_stop_typing', { senderId: userId });
+        }
+      }
+        break;
+      case 'user_status_channel': {
+        const { userId, status } = JSON.parse(message) ?? {};
+        if (userId && status) {
+          console.log(`User ${userId} is now ${status}`);
+
+          // You can now broadcast this to connected clients
+          io.emit("user_status_update", { userId, status });
+          if (status === 'offline') {
+            io.emit("user_status_update_for_call", { userId, status });
+          }
+        }
+      }
+        break;
+      case 'voice_call_channel': {
+        const { targetSocketId, event, ...rest } = messageData;
+        if (io.of("/").sockets.has(targetSocketId)) {
+          io.to(targetSocketId).emit(event, { ...rest });
+        }
+      }
+        break;
     }
   });
 };

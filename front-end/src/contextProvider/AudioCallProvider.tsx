@@ -3,6 +3,7 @@ import socket from "../utils/socket";
 import { useAuth } from "./AuthProvider";
 import VoiceCallBar from "../components/VoiceCallBar";
 import IncomingCallDialog from "../components/IncomingCallDialog";
+import { eToastType } from "../components/toast/Toast";
 
 // Configuration for ICE servers (STUN in this case)
 const iceServers = {
@@ -28,7 +29,7 @@ interface iAudioCallContext {
 const AudioCallContext = createContext({} as iAudioCallContext);
 
 const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
+  const { user, handleToastToogle } = useAuth();
   const [isAlreadyInCall, setIsAlreadyInCall] = useState(false); // Track ongoing call state
   const [remoteSocketId, setRemoteSocketId] = useState<string | null>(null); // Store peer socket ID
   const [incomingCall, setIncomingCall] = useState<null | {
@@ -45,6 +46,8 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
   const peerConnection = useRef<RTCPeerConnection | null>(null); // RTCPeerConnection instance
   const remoteStreamRef = useRef<HTMLAudioElement>(new Audio()); // Remote audio element
   const startTimeRef = useRef<number | null>(null);
+  const ringtoneRef = useRef<HTMLAudioElement | null>(null);
+  const callTimeoutRef = useRef<number | null>(null);
 
   // Function to create and configure a peer connection
   const createPeerConnection = (peerId: string) => {
@@ -53,7 +56,7 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
     // Send ICE candidate to the other peer via signaling server
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        socket.emit("ice-candidate", { targetSocketId: peerId, candidate: event.candidate });
+        socket.emit("ice_candidate", { targetSocketId: peerId, candidate: event.candidate });
       }
     };
 
@@ -75,12 +78,23 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
     if (!isAlreadyInCall) {
       try {
         // Fetch users scket id
-        socket.emit("fetch-user-socket-id", { targetUserId }, async (targetSocketId: string) => {
+        socket.emit("fetch_user_socket_id", { targetUserId }, async (targetSocketId: string) => {
           if (!targetSocketId) {
             console.log("User is offline");
+            handleToastToogle("Can't connect, user is offline", eToastType.warning);
             return;
           }
           setCallStatus('Connecting');
+
+          // Starting timmer to end call after 30 sec if call not answered
+          callTimeoutRef.current = setTimeout(() => {
+            if (!isAlreadyInCall) {
+              socket.emit("end_call", { targetSocketId });
+              endCall();
+              handleToastToogle("Call not answered", eToastType.warning);
+            }
+          }, 30000); // 30 seconds
+
           // Get local audio stream
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           localStreamRef.current = stream;
@@ -93,7 +107,7 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
           await peerConnection.current.setLocalDescription(offer);
 
           // Send offer to remote user
-          socket.emit("call-user", {
+          socket.emit("call_user", {
             targetSocketId,
             offer,
             callerDetails: {
@@ -108,6 +122,7 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
         });
       } catch (error) {
         console.log("Error starting call:", error);
+        handleToastToogle("Error while calling", eToastType.error);
       }
     }
   };
@@ -120,10 +135,19 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
     setIsAlreadyInCall(false);
     setCallerDetail(null);
     if (remoteSocketId) {
-      socket.emit("end-call", { targetSocketId: remoteSocketId });
+      socket.emit("end_call", { targetSocketId: remoteSocketId });
     }
     setCallStatus('idle');
     setRemoteSocketId(null);
+    if (callTimeoutRef.current) {
+      clearTimeout(callTimeoutRef.current);
+      callTimeoutRef.current = null;
+    }
+    if (ringtoneRef.current) {
+      ringtoneRef.current.pause();
+      ringtoneRef.current.currentTime = 0;
+      ringtoneRef.current = null;
+    }
     // check if dialog is in opened state
     if ((document.getElementById('incoming-call-modal') as HTMLDialogElement | null)?.open) {
       (document.getElementById('incoming-call-modal') as HTMLDialogElement | null)?.close();
@@ -142,7 +166,7 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
     const answer = await peerConnection.current.createAnswer();
     await peerConnection.current.setLocalDescription(answer);
 
-    socket.emit("answer-call", {
+    socket.emit("answer_call", {
       targetSocketId: from,
       answer,
     });
@@ -153,14 +177,25 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
     setIncomingCall(null);
     setCallStatus('in-call');
 
+    if (ringtoneRef.current) {
+      ringtoneRef.current.pause();
+      ringtoneRef.current.currentTime = 0;
+      ringtoneRef.current = null;
+    }
+
     (document.getElementById('incoming-call-modal') as HTMLDialogElement | null)?.close();
   };
 
   // ❌ Reject the incoming call
   const handleRejectCall = () => {
-    socket.emit("reject-call", { targetSocketId: incomingCall?.from });
+    socket.emit("reject_call", { targetSocketId: incomingCall?.from });
     setIncomingCall(null);
     setCallStatus('idle');
+    if (ringtoneRef.current) {
+      ringtoneRef.current.pause();
+      ringtoneRef.current.currentTime = 0;
+      ringtoneRef.current = null;
+    }
     (document.getElementById('incoming-call-modal') as HTMLDialogElement | null)?.close();
   };
 
@@ -178,53 +213,78 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
   // Handle incoming socket events
   useEffect(() => {
     // When a call is received
-    socket.on("incoming-call", async ({ from, offer, callerDetails }) => {
+    socket.on("incoming_call", async ({ from, offer, callerDetails }) => {
       if (isAlreadyInCall) {
         console.log("Already in call");
+        handleToastToogle(`${callerDetails?.fullName} is calling you...`, eToastType.warning);
         return;
       }
       setCallStatus('Ringing');
+      ringtoneRef.current = new Audio('/audio/incoming-call-ringtone.mp3');
+      ringtoneRef.current.loop = true;
+      ringtoneRef.current.play().catch((err) => console.log("Auto-play blocked:", err));
       setIncomingCall({ from, offer, callerDetails });
       (document.getElementById('incoming-call-modal') as HTMLDialogElement | null)?.showModal();
     });
 
     // When the remote user answers the call
-    socket.on("call-answered", async ({ from, answer }) => {
+    socket.on("call_answered", async ({ from, answer }) => {
       setCallStatus('in-call');
+      if (callTimeoutRef.current) {
+        clearTimeout(callTimeoutRef.current);
+        callTimeoutRef.current = null;
+      }
       await peerConnection.current?.setRemoteDescription(new RTCSessionDescription(answer));
     });
 
     // When an ICE candidate is received from the other peer
-    socket.on("ice-candidate", ({ from, candidate }) => {
+    socket.on("ice_candidate", ({ from, candidate }) => {
       peerConnection.current?.addIceCandidate(new RTCIceCandidate(candidate));
     });
 
     // When the call is ended by the remote user
-    socket.on("call-ended", () => {
+    socket.on("call_ended", () => {
       endCall();
     });
 
     // When the remote user rejects the call
-    socket.on("call-rejected", () => {
-      alert("Call was rejected.");
+    socket.on("call_rejected", () => {
+      handleToastToogle('Call was rejected.', eToastType.warning);
       endCall();
     });
 
     // When the remote user's device is ringing
-    socket.on('call-ringing', () => {
+    socket.on('call_ringing', () => {
       setCallStatus('Ringing');
     });
 
     // Cleanup socket listeners on unmount
     return () => {
-      socket.off("incoming-call");
-      socket.off("call-answered");
-      socket.off("ice-candidate");
-      socket.off("call-ended");
-      socket.off("call-rejected");
-      socket.off("call-ringing");
+      socket.off("incoming_call");
+      socket.off("call_answered");
+      socket.off("ice_candidate");
+      socket.off("call_ended");
+      socket.off("call_rejected");
+      socket.off("call_ringing");
     }
   }, []);
+
+  useEffect(() => {
+    // When the remote user went offline in mid call
+    socket.on('user_status_update_for_call', (message) => {
+      const { userId, status } = message;
+
+      if (status === 'offline' && userId === callerDetail?.userId && isAlreadyInCall) {
+        endCall();
+        handleToastToogle('Call disconnected, user is offline', eToastType.warning);
+      }
+    });
+
+    // clean up
+    return () => {
+      socket.off("user_status_update_for_call");
+    }
+  }, [callerDetail, isAlreadyInCall]);
 
   // Handle call duration
   useEffect(() => {

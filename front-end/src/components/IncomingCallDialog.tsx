@@ -12,7 +12,7 @@ const IncomingCallDialog = ({ callerDetails, handleAcceptCall, handleRejectCall 
     <dialog id="incoming-call-modal" className="modal modal-bottom sm:modal-middle">
       <div className="modal-box capitalize max-w-sm w-full mx-auto">
         <form method="dialog">
-          <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+          <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={handleRejectCall}>✕</button>
         </form>
         {callerDetails && (
           <div>
