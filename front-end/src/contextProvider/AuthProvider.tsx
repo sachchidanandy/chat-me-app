@@ -12,6 +12,7 @@ import {
 import Toast, { eToastType } from "../components/toast/Toast";
 import Loader from "../components/Loader";
 import socket from "../utils/socket";
+import { requestNotificationPermission } from "../utils/helpers";
 
 interface iAuthContext {
   user: null | iUser;
@@ -73,6 +74,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
         privateKey && storePrivateKey(privateKey);
         setUser({ ...user, pubKey: user.pubKey, priKey: privateKey } as unknown as iUser);
         socket.emit('user_online', user?.userId);
+        requestNotificationPermission();
       } else if (error) {
         handleToastToogle(error, eToastType.error);
       }
@@ -102,6 +104,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
         storePrivateKey(privateKey);
         setUser({ ...user, pubKey: publicKey, priKey: privateKey } as unknown as iUser);
         socket.emit('user_online', user?.userId);
+        requestNotificationPermission();
       } else if (error) {
         handleToastToogle(error, eToastType.error);
       }
@@ -127,6 +130,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
       if (privateKey) {
         setUser({ ...userData.user, pubKey: userData.user.pubKey, priKey: getPrivateKey() } as unknown as iUser);
         socket.emit('user_online', userData?.user?.userId);
+        requestNotificationPermission();
       } else {
         logout();
       }

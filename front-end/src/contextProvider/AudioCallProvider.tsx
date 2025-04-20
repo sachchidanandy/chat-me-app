@@ -219,6 +219,16 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
         handleToastToogle(`${callerDetails?.fullName} is calling you...`, eToastType.warning);
         return;
       }
+      const isTabInBackground = document.hidden;
+      if (isTabInBackground && Notification.permission === "granted") {
+        const notification = new Notification("📞 Incoming Call", {
+          body: `Call from ${callerDetails?.fullName}`, // optional
+        });
+
+        notification.onclick = () => {
+          window.focus();
+        };
+      }
       setCallStatus('Ringing');
       ringtoneRef.current = new Audio('/audio/incoming-call-ringtone.mp3');
       ringtoneRef.current.loop = true;

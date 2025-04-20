@@ -67,7 +67,29 @@ export const convertBlobToFile = (
   return file;
 };
 
+/**
+ * Extracts the first letter of each word in a full name and returns a string of those letters.
+ * The returned string is in upper case.
+ * @param {string} [fullName=''] - The full name to extract initials from.
+ * If not provided, an empty string is returned.
+ * @returns {string} A string of the extracted initials in upper case.
+ */
 export const getNamesInitials = (fullName = '') => fullName
   .split(' ')
   .map((name) => name.charAt(0).toUpperCase())
   .join('');
+
+/**
+ * Requests the user's permission for showing notifications if it hasn't been granted before.
+ * Does nothing if the permission has already been granted.
+ * @returns {Promise<void>}
+ */
+export const requestNotificationPermission = async (): Promise<void> => {
+  if ("Notification" in window && Notification.permission !== "granted") {
+    try {
+      await Notification.requestPermission();
+    } catch (error) {
+      console.error("Notification permission denied", error);
+    }
+  }
+};
