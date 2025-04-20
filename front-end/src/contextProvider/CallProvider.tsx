@@ -20,15 +20,16 @@ export type CallerDetails = {
 };
 
 export type CallStatus = "idle" | "Connecting" | "Ringing" | "in-call";
+export type CallType = "audio" | "video";
 
-interface iAudioCallContext {
-  startCall: (targetUserId: string, targetCallerDetails: CallerDetails) => void;
+interface iCallContext {
+  startCall: (targetUserId: string, targetCallerDetails: CallerDetails, cType: CallType) => void;
   isAlreadyInCall: boolean;
 }
 
-const AudioCallContext = createContext({} as iAudioCallContext);
+const CallContext = createContext({} as iCallContext);
 
-const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
+const CallProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, handleToastToogle } = useAuth();
   const [isAlreadyInCall, setIsAlreadyInCall] = useState(false); // Track ongoing call state
   const [remoteSocketId, setRemoteSocketId] = useState<string | null>(null); // Store peer socket ID
@@ -41,16 +42,19 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
   const [callerDetail, setCallerDetail] = useState<null | CallerDetails>(null);
   const [callStatus, setCallStatus] = useState<CallStatus>('idle');
   const [callDuration, setCallDuration] = useState('00:00');
+  const [callType, setCallType] = useState<CallType>('audio');
 
   const localStreamRef = useRef<MediaStream | null>(null); // Local audio stream
+  const localVideoRef = useRef<HTMLVideoElement | null>(null); // Local video stream
   const peerConnection = useRef<RTCPeerConnection | null>(null); // RTCPeerConnection instance
-  const remoteStreamRef = useRef<HTMLAudioElement>(new Audio()); // Remote audio element
+  const remoteAudioRef = useRef<HTMLAudioElement>(new Audio()); // Remote audio element
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null); // Remote video stream
   const startTimeRef = useRef<number | null>(null);
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
   const callTimeoutRef = useRef<number | null>(null);
 
   // Function to create and configure a peer connection
-  const createPeerConnection = (peerId: string) => {
+  const createPeerConnection = (peerId: string, cType: CallType = callType) => {
     const pc = new RTCPeerConnection(iceServers);
 
     // Send ICE candidate to the other peer via signaling server
@@ -60,12 +64,19 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    // Handle incoming remote stream and attach to audio element
+    // Handle incoming remote stream and attach to audio and video element
     pc.ontrack = (event) => {
-      remoteStreamRef.current.srcObject = event.streams[0];
+      const remoteStream = event.streams[0];
+
+      if (cType === "video" && remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStream;
+      } else if (cType === "audio" && remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = remoteStream;
+        remoteAudioRef.current.play();
+      }
     };
 
-    // Add local audio tracks to the connection
+    // Add local tracks to the connection
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => pc.addTrack(track, localStreamRef.current!));
     }
@@ -74,7 +85,7 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Start a call by creating offer and sending it to the target user
-  const startCall = async (targetUserId: string, targetCallerDetails: CallerDetails) => {
+  const startCall = async (targetUserId: string, targetCallerDetails: CallerDetails, cType: CallType = "audio") => {
     if (!isAlreadyInCall) {
       try {
         // Fetch users scket id
@@ -85,6 +96,7 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
             return;
           }
           setCallStatus('Connecting');
+          setCallType(cType);
 
           // Starting timmer to end call after 30 sec if call not answered
           callTimeoutRef.current = setTimeout(() => {
@@ -96,11 +108,16 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
           }, 30000); // 30 seconds
 
           // Get local audio stream
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const constraints = cType === "video" ? { video: true, audio: true } : { video: false, audio: true };
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
           localStreamRef.current = stream;
 
+          if (cType === "video" && localVideoRef.current) {
+            localVideoRef.current.srcObject = stream;
+          }
+
           // Create peer connection and offer
-          peerConnection.current = createPeerConnection(targetSocketId);
+          peerConnection.current = createPeerConnection(targetSocketId, cType);
           setRemoteSocketId(targetSocketId);
 
           const offer = await peerConnection.current.createOffer();
@@ -115,7 +132,8 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
               username: user?.username || '',
               fullName: user?.fullName || '',
               profilePicUrl: user?.profilePicUrl || '',
-            }
+            },
+            cType,
           });
           setIsAlreadyInCall(true);
           setCallerDetail(targetCallerDetails);
@@ -157,8 +175,13 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
   // ✅ Accept an incoming call
   const handleAcceptCall = async () => {
     const { from, offer, callerDetails } = incomingCall!;
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const constraints = callType === "video" ? { video: true, audio: true } : { video: false, audio: true };
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
     localStreamRef.current = stream;
+
+    if (callType === "video" && localVideoRef.current) {
+      localVideoRef.current.srcObject = stream;
+    }
 
     peerConnection.current = createPeerConnection(from);
     await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
@@ -213,7 +236,7 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
   // Handle incoming socket events
   useEffect(() => {
     // When a call is received
-    socket.on("incoming_call", async ({ from, offer, callerDetails }) => {
+    socket.on("incoming_call", async ({ from, offer, callerDetails, cType }) => {
       if (isAlreadyInCall) {
         console.log("Already in call");
         handleToastToogle(`${callerDetails?.fullName} is calling you...`, eToastType.warning);
@@ -234,6 +257,7 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
       ringtoneRef.current.loop = true;
       ringtoneRef.current.play().catch((err) => console.log("Auto-play blocked:", err));
       setIncomingCall({ from, offer, callerDetails });
+      setCallType(cType);
       (document.getElementById('incoming-call-modal') as HTMLDialogElement | null)?.showModal();
     });
 
@@ -326,7 +350,13 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       {/* Audio tag for remote stream playback */}
-      <audio ref={remoteStreamRef} autoPlay controls style={{ display: "none" }} />
+      <audio ref={remoteAudioRef} autoPlay controls hidden />
+      {callType === "video" && (
+        <div className="flex space-x-4 mt-4">
+          <video ref={localVideoRef} autoPlay muted playsInline className="w-1/2 rounded-lg shadow" />
+          <video ref={remoteVideoRef} autoPlay playsInline className="w-1/2 rounded-lg shadow" />
+        </div>
+      )}
       <IncomingCallDialog
         callerDetails={incomingCall?.callerDetails || { userId: '', username: '', fullName: '', profilePicUrl: '' }}
         handleAcceptCall={handleAcceptCall}
@@ -344,13 +374,13 @@ const AudioCallProvider = ({ children }: { children: React.ReactNode }) => {
           />
         ) : null
       }
-      <AudioCallContext.Provider value={{ startCall, isAlreadyInCall }}>
+      <CallContext.Provider value={{ startCall, isAlreadyInCall }}>
         {children}
-      </AudioCallContext.Provider>
+      </CallContext.Provider>
     </>
   );
 };
 
-export const useAudioCall = () => useContext(AudioCallContext);
+export const useCall = () => useContext(CallContext);
 
-export default AudioCallProvider;
+export default CallProvider;

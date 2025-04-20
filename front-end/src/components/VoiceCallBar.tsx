@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getNamesInitials } from "../utils/helpers";
 import Svg from "./Svg";
-import { CallerDetails, CallStatus } from "../contextProvider/AudioCallProvider";
+import { CallerDetails, CallStatus } from "../contextProvider/CallProvider";
 
 interface iVoiceCallBarProps {
   endCall: () => void;

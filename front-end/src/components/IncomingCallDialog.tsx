@@ -1,4 +1,4 @@
-import { CallerDetails } from "../contextProvider/AudioCallProvider";
+import { CallerDetails } from "../contextProvider/CallProvider";
 import { getNamesInitials } from "../utils/helpers";
 import Svg from "./Svg";
 

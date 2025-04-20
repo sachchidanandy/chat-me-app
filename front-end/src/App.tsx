@@ -7,7 +7,7 @@ import FriendsProvider from "./contextProvider/FriendsProvider";
 import Loader from "./components/Loader";
 import ChatProvider from "./contextProvider/ChatProvider";
 import { getPrivateKey } from "./utils/encryptionKeys";
-import AudioCallProvider from "./contextProvider/AudioCallProvider";
+import CallProvider from "./contextProvider/CallProvider";
 
 const Navbar = lazy(() => import("./components/Navbar"));
 const Signup = lazy(() => import("./pages/Signup"));
@@ -30,7 +30,7 @@ function App() {
     <AuthContextProvider>
       <FriendsProvider>
         <ChatProvider>
-          <AudioCallProvider>
+          <CallProvider>
             <BrowserRouter>
               <Suspense fallback={<Loader />}>
                 <Navbar />
@@ -49,7 +49,7 @@ function App() {
                 </div>
               </Suspense>
             </BrowserRouter>
-          </AudioCallProvider>
+          </CallProvider>
         </ChatProvider>
       </FriendsProvider>
     </AuthContextProvider>

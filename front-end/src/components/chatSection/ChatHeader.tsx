@@ -4,11 +4,11 @@ import Svg from "../Svg";
 import AnimationStyle from "../../utils/animation.module.css";
 import { iChatSectionProps } from "./ChatSection";
 import { getNamesInitials, getRedableTimeStamp } from "../../utils/helpers";
-import { useAudioCall } from "../../contextProvider/AudioCallProvider";
+import { useCall } from "../../contextProvider/CallProvider";
 
 const ChatHeader = ({ isMobile, setShowMessageSection }: iChatSectionProps) => {
   const { typing } = useChat();
-  const { startCall, isAlreadyInCall } = useAudioCall();
+  const { startCall, isAlreadyInCall } = useCall();
   const {
     selectedFriends: {
       name,
@@ -54,24 +54,30 @@ const ChatHeader = ({ isMobile, setShowMessageSection }: iChatSectionProps) => {
       </div>
       <div className="flex items-center gap-2">
         {!isAlreadyInCall && (
-          <button
-            className="btn btn-ghost btn-circle"
-            id="phone-call-button"
-            disabled={isAlreadyInCall}
-            onClick={() => startCall(id, { userId: id, username: '', fullName: name, profilePicUrl })}>
-            <Svg
-              className="fill-none stroke-current"
-              viewBox="0 0 24 24"
-              svgName="normalCall" />
-          </button>
-        )}
-        {!isAlreadyInCall && (
-          <button className="btn btn-ghost btn-circle" id="video-call-button">
-            <Svg
-              className="fill-none stroke-current"
-              viewBox="0 0 24 24"
-              svgName="videoCall" />
-          </button>
+          <>
+            <button
+              className="btn btn-ghost btn-circle"
+              id="phone-call-button"
+              disabled={isAlreadyInCall}
+              onClick={() => startCall(id, { userId: id, username: '', fullName: name, profilePicUrl }, 'audio')}
+            >
+              <Svg
+                className="fill-none stroke-current"
+                viewBox="0 0 24 24"
+                svgName="normalCall" />
+            </button>
+            <button
+              className="btn btn-ghost btn-circle"
+              id="video-call-button"
+              disabled={isAlreadyInCall}
+              onClick={() => startCall(id, { userId: id, username: '', fullName: name, profilePicUrl }, 'video')}
+            >
+              <Svg
+                className="fill-none stroke-current"
+                viewBox="0 0 24 24"
+                svgName="videoCall" />
+            </button>
+          </>
         )}
         <button className="btn btn-ghost btn-circle" id="search-message-button">
           <Svg svgName="search" className="size-6" />

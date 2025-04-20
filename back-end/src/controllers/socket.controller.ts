@@ -95,13 +95,13 @@ export const handleSocketConnection = (io: Server, redisPub: Redis, redisStore: 
       callback(targetSocketId);
     });
 
-    socket.on("call_user", ({ targetSocketId, offer, callerDetails }) => {
+    socket.on("call_user", ({ targetSocketId, offer, callerDetails, cType }) => {
       if (io.of("/").sockets.has(targetSocketId)) {
-        io.to(targetSocketId).emit("incoming_call", { from: socket.id, offer, callerDetails });
+        io.to(targetSocketId).emit("incoming_call", { from: socket.id, offer, callerDetails, cType });
       } else {
         redisPub.publish(
           'voice_call_channel',
-          JSON.stringify({ event: 'incoming_call', targetSocketId, offer, callerDetails, from: socket.id })
+          JSON.stringify({ event: 'incoming_call', targetSocketId, offer, callerDetails, from: socket.id, cType })
         );
       }
       io.to(socket.id).emit("call_ringing");
