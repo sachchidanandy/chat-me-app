@@ -37,14 +37,15 @@ function App() {
                 <div
                   className="flex flex-col items-center justify-center align-center h-full w-full">
                   <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Signup />} />
                     <Route
                       path="/:friendId?"
                       element={<ProtectedRoute element={
                         Dashboard
                       } />
-                      } />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Signup />} />
+                      }
+                    />
                   </Routes>
                 </div>
               </Suspense>
