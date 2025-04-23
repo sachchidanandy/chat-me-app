@@ -1,13 +1,14 @@
-import { CallerDetails } from "../contextProvider/CallProvider";
+import { CallerDetails, CallType } from "../contextProvider/CallProvider";
 import { getNamesInitials } from "../utils/helpers";
 import Svg from "./Svg";
 
 interface iIcomingCallDialogProps {
   callerDetails: CallerDetails;
+  type: CallType;
   handleAcceptCall: () => void;
   handleRejectCall: () => void;
 }
-const IncomingCallDialog = ({ callerDetails, handleAcceptCall, handleRejectCall }: iIcomingCallDialogProps) => {
+const IncomingCallDialog = ({ callerDetails, handleAcceptCall, handleRejectCall, type }: iIcomingCallDialogProps) => {
   return (
     <dialog id="incoming-call-modal" className="modal modal-bottom sm:modal-middle">
       <div className="modal-box capitalize max-w-sm w-full mx-auto">
@@ -28,7 +29,7 @@ const IncomingCallDialog = ({ callerDetails, handleAcceptCall, handleRejectCall 
                 {getNamesInitials(callerDetails.fullName) || ''}
               </div>}
               <div>
-                <p className=" font-bold text-center">{callerDetails.fullName} Calling...</p>
+                <p className=" font-bold text-center capitalize">{callerDetails.fullName} {type} Calling...</p>
                 <p className="font-light text-center">{callerDetails.username}</p>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { useAuth } from "./AuthProvider";
 import VoiceCallBar from "../components/VoiceCallBar";
 import IncomingCallDialog from "../components/IncomingCallDialog";
 import { eToastType } from "../components/toast/Toast";
+import Svg from "../components/Svg";
 
 // Configuration for ICE servers (STUN in this case)
 const iceServers = {
@@ -19,7 +20,7 @@ export type CallerDetails = {
   profilePicUrl: string;
 };
 
-export type CallStatus = "idle" | "Connecting" | "Ringing" | "in-call";
+export type CallStatus = "idle" | "connecting" | "ringing" | "in-call";
 export type CallType = "audio" | "video";
 
 interface iCallContext {
@@ -42,7 +43,8 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
   const [callerDetail, setCallerDetail] = useState<null | CallerDetails>(null);
   const [callStatus, setCallStatus] = useState<CallStatus>('idle');
   const [callDuration, setCallDuration] = useState('00:00');
-  const [callType, setCallType] = useState<CallType>('audio');
+  const [callType, setCallType] = useState<CallType | null>(null);
+  const [isCameraOff, setIsCameraOff] = useState(false);
 
   const localStreamRef = useRef<MediaStream | null>(null); // Local audio stream
   const localVideoRef = useRef<HTMLVideoElement | null>(null); // Local video stream
@@ -54,7 +56,7 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
   const callTimeoutRef = useRef<number | null>(null);
 
   // Function to create and configure a peer connection
-  const createPeerConnection = (peerId: string, cType: CallType = callType) => {
+  const createPeerConnection = (peerId: string, cType: CallType = "audio") => {
     const pc = new RTCPeerConnection(iceServers);
 
     // Send ICE candidate to the other peer via signaling server
@@ -95,7 +97,7 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
             handleToastToogle("Can't connect, user is offline", eToastType.warning);
             return;
           }
-          setCallStatus('Connecting');
+          setCallStatus('connecting');
           setCallType(cType);
 
           // Starting timmer to end call after 30 sec if call not answered
@@ -156,6 +158,7 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
       socket.emit("end_call", { targetSocketId: remoteSocketId });
     }
     setCallStatus('idle');
+    setCallDuration('00:00');
     setRemoteSocketId(null);
     if (callTimeoutRef.current) {
       clearTimeout(callTimeoutRef.current);
@@ -166,6 +169,7 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
       ringtoneRef.current.currentTime = 0;
       ringtoneRef.current = null;
     }
+    setCallType(null);
     // check if dialog is in opened state
     if ((document.getElementById('incoming-call-modal') as HTMLDialogElement | null)?.open) {
       (document.getElementById('incoming-call-modal') as HTMLDialogElement | null)?.close();
@@ -183,7 +187,7 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
       localVideoRef.current.srcObject = stream;
     }
 
-    peerConnection.current = createPeerConnection(from);
+    peerConnection.current = createPeerConnection(from, callType || 'audio');
     await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
 
     const answer = await peerConnection.current.createAnswer();
@@ -233,6 +237,17 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Toogle camera
+  const toggleCamera = () => {
+    if (!localStreamRef.current) return;
+
+    const videoTrack = localStreamRef.current.getVideoTracks()[0];
+    if (videoTrack) {
+      videoTrack.enabled = !videoTrack.enabled;
+      setIsCameraOff(!videoTrack.enabled);
+    }
+  }
+
   // Handle incoming socket events
   useEffect(() => {
     // When a call is received
@@ -252,7 +267,7 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
           window.focus();
         };
       }
-      setCallStatus('Ringing');
+      setCallStatus('ringing');
       ringtoneRef.current = new Audio('/audio/incoming-call-ringtone.mp3');
       ringtoneRef.current.loop = true;
       ringtoneRef.current.play().catch((err) => console.log("Auto-play blocked:", err));
@@ -289,7 +304,7 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
 
     // When the remote user's device is ringing
     socket.on('call_ringing', () => {
-      setCallStatus('Ringing');
+      setCallStatus('ringing');
     });
 
     // Cleanup socket listeners on unmount
@@ -351,19 +366,50 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
     <>
       {/* Audio tag for remote stream playback */}
       <audio ref={remoteAudioRef} autoPlay controls hidden />
-      {callType === "video" && (
-        <div className="flex space-x-4 mt-4">
-          <video ref={localVideoRef} autoPlay muted playsInline className="w-1/2 rounded-lg shadow" />
-          <video ref={remoteVideoRef} autoPlay playsInline className="w-1/2 rounded-lg shadow" />
+      {(callType === 'video') && (
+        <div className="relative w-full h-screen bg-black text-white overflow-hidden touch-none">
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            className="w-full h-full object-cover"
+          />
+          <video
+            ref={localVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="absolute bottom-4 right-4 w-36 h-24 sm:w-40 sm:h-28 rounded-lg border-2 border-white object-cover shadow-md"
+          />
+          <div className="absolute top-4 left-4 text-xs sm:text-sm bg-black/50 px-3 py-2 rounded-lg">
+            <div className="font-semibold truncate max-w-[100px] sm:max-w-none capitalize">{callerDetail?.fullName}</div>
+            <div>{['connecting', 'ringing'].includes(callStatus) ? `${callStatus}...` : callDuration}</div>
+          </div>
+
+          <div className={`absolute bottom-4 max-w-screen-sm left-1/2 flex justify-center gap-6`}>
+            <button onClick={toggleMute} className="btn btn-circle btn-ghost border-white focus:outline-none">
+              {isMuted ? <Svg svgName="muteMicroPhone" className="fill-none stroke-current text-white h-8 w-8" /> : <Svg svgName="microPhone" className="fill-none stroke-current text-white h-8 w-8" />}
+            </button>
+            <button onClick={toggleCamera} className="btn btn-circle btn-ghost border-white focus:outline-none">
+              {isCameraOff ? <Svg svgName="offVideoCall" className="fill-none stroke-current text-white h-8 w-8" /> : <Svg svgName="videoCall" className="fill-none stroke-current text-white h-8 w-8" />}
+            </button>
+            <button className="btn btn-circle btn-ghost border-white bg-red-800" onClick={endCall}>
+              <Svg
+                className="fill-none stroke-current text-white h-8 w-8"
+                viewBox="0 0 24 24"
+                svgName="endNormalCall" />
+            </button>
+          </div>
         </div>
       )}
       <IncomingCallDialog
         callerDetails={incomingCall?.callerDetails || { userId: '', username: '', fullName: '', profilePicUrl: '' }}
         handleAcceptCall={handleAcceptCall}
         handleRejectCall={handleRejectCall}
+        type={callType || 'audio'}
       />
       {
-        (isAlreadyInCall && callerDetail) ? (
+        (isAlreadyInCall && callerDetail && callType === 'audio') && (
           <VoiceCallBar
             endCall={endCall}
             toggleMute={toggleMute}
@@ -372,7 +418,7 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
             callStatus={callStatus}
             callDuration={callDuration}
           />
-        ) : null
+        )
       }
       <CallContext.Provider value={{ startCall, isAlreadyInCall }}>
         {children}

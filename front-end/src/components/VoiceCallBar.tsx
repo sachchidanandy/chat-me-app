@@ -62,8 +62,8 @@ const VoiceCallBar = (props: iVoiceCallBarProps) => {
         <span>{getNamesInitials(callerDetail.fullName) || ''}</span>
       </div>}
       <div className="flex flex-col">
-        <span className="font-bold text-white">{callerDetail.fullName.toUpperCase()}</span>
-        <span className="text-pretty text-white">{['Connecting', 'Ringing'].includes(callStatus) ? `${callStatus}...` : callDuration}</span>
+        <span className="font-bold text-white capitalize">{callerDetail.fullName.toUpperCase()}</span>
+        <span className="text-pretty text-white capitalize">{['connecting', 'ringing'].includes(callStatus) ? `${callStatus}...` : callDuration}</span>
       </div>
       <div className="flex items-center gap-2 float-right ml-auto">
         <button className="btn btn-circle btn-ghost border-white bg-red-800" onClick={endCall}>
@@ -72,11 +72,8 @@ const VoiceCallBar = (props: iVoiceCallBarProps) => {
             viewBox="0 0 24 24"
             svgName="endNormalCall" />
         </button>
-        <button className={`btn btn-circle btn-ghost ${isMuted ? 'bg-gray' : 'bg-white'} border-white`} onClick={toggleMute}>
-          <Svg
-            className={`fill-none stroke-current ${isMuted ? 'text-white' : 'text-gray-600'} h-8 w-8`}
-            viewBox="0 0 24 24"
-            svgName="muteMicroPhone" />
+        <button className="btn btn-circle btn-ghost bg-gray border-white" onClick={toggleMute}>
+          {isMuted ? <Svg svgName="muteMicroPhone" className="fill-none stroke-current text-white h-8 w-8" /> : <Svg svgName="microPhone" className="fill-none stroke-current text-white h-8 w-8" />}
         </button>
       </div>
     </div>

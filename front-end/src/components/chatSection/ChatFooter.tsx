@@ -140,7 +140,7 @@ const ChatFooter = () => {
           setRecording(true);
           (document.getElementById('audio-recording-modal') as HTMLDialogElement)?.showModal();
         }}>
-          <Svg svgName="start-audio-recording" />
+          <Svg svgName="microPhone" />
         </button>
       )}
 

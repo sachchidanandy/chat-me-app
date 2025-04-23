@@ -278,7 +278,7 @@ export default function AudioRecorderModal({ onCaptureAudio, onPopupClose, sendR
                 <div className="tooltip tooltip-bottom" data-tip={error ? 'Retry Recording' : 'Start Recording'}>
                   {error && <div className="text-red-500 mb-1">{error}</div>}
                   <button disabled={fileUploadInProgress} onClick={startRecording} className="btn bg-primary text-white btn-circle">
-                    <Svg svgName="start-audio-recording" className="m-auto" />
+                    <Svg svgName="microPhone" className="m-auto" />
                   </button>
                 </div>
               )}
