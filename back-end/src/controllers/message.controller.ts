@@ -8,7 +8,7 @@ import { handleFileUpload } from "@services/uploadFile.services";
 import { ErrorResponse } from "@utils/errorResponse";
 import { sendSuccessResponse } from "@utils/wrapper";
 import { Request, Response } from "express";
-import { io, redisStore } from "src";
+import { io, redisStore } from "../index";
 import { AWS_S3_BUCKET_NAME } from '@utils/config';
 
 export const fetchMessages = async (req: Request, res: Response) => {

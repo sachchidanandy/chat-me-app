@@ -7,7 +7,7 @@ import { ErrorResponse } from "@utils/errorResponse";
 import { sendSuccessResponse } from "@utils/wrapper";
 import { Request, Response } from "express";
 import { Types } from "mongoose";
-import { redisStore } from "src";
+import { redisStore } from "../index";
 
 
 export const getAllFriends = async (req: Request, res: Response) => {

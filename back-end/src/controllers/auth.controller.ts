@@ -8,7 +8,7 @@ import { ErrorResponse } from "@utils/errorResponse";
 import { generateToken } from "@utils/jwtToken";
 import { encryptPassword, comparePassword } from "@utils/encryption";
 import { activeUsers } from "./socket.controller";
-import { redisPub, redisStore } from "src";
+import { redisPub, redisStore } from "../index";
 
 export const signup = async (req: Request, res: Response) => {
   const { username, email, fullName, password, publicKey, encryptedPrivateKey } = req.body;
