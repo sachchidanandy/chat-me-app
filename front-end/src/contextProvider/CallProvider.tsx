@@ -279,6 +279,7 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
     // When the remote user answers the call
     socket.on("call_answered", async ({ from, answer }) => {
       setCallStatus('in-call');
+      console.log("Call is answered to Socket ID: ", from);
       if (callTimeoutRef.current) {
         clearTimeout(callTimeoutRef.current);
         callTimeoutRef.current = null;
@@ -288,6 +289,7 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
 
     // When an ICE candidate is received from the other peer
     socket.on("ice_candidate", ({ from, candidate }) => {
+      console.log("ice_candidate to Socket ID: ", from);
       peerConnection.current?.addIceCandidate(new RTCIceCandidate(candidate));
     });
 
