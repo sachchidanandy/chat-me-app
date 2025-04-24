@@ -17,6 +17,27 @@ const VoiceCallBar = (props: iVoiceCallBarProps) => {
   const [dragging, setDragging] = useState(false);
   const positionRef = useRef({ x: 0, y: 0 });
 
+  const startDragMouse = (e: React.MouseEvent) => {
+    setDragging(true);
+    positionRef.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    };
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const startDragTouch = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setDragging(true);
+    positionRef.current = {
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y,
+    };
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!dragging) return;
@@ -27,16 +48,32 @@ const VoiceCallBar = (props: iVoiceCallBarProps) => {
       e.stopPropagation();
     };
 
-    const handleMouseUp = () => {
-      setDragging(false);
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!dragging) return;
+      const touch = e.touches[0];
+      setPosition({
+        x: touch.clientX - positionRef.current.x,
+        y: touch.clientY - positionRef.current.y,
+      });
     };
 
+    const stopDragging = () => setDragging(false);
+
     window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseup', stopDragging);
+
+    window.addEventListener("touchmove", handleTouchMove);
+    window.addEventListener("touchend", stopDragging);
+    window.addEventListener("touchcancel", stopDragging);
+
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mouseup', stopDragging);
+
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", stopDragging);
+      window.removeEventListener("touchcancel", stopDragging);
     }
   }, [dragging]);
 
@@ -44,12 +81,8 @@ const VoiceCallBar = (props: iVoiceCallBarProps) => {
     <div
       className='flex items-center fixed bg-primary max-w-sm w-full p-1 gap-2 rounded'
       style={{ left: position.x, top: position.y, zIndex: 1000 }}
-      onMouseDown={(e) => {
-        setDragging(true);
-        positionRef.current = { x: e.clientX - position.x, y: e.clientY - position.y };
-        e.preventDefault();
-        e.stopPropagation();
-      }}
+      onMouseDown={startDragMouse}
+      onTouchStart={startDragTouch}
     >
       {callerDetail.profilePicUrl ? <figure>
         <img

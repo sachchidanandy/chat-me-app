@@ -388,14 +388,14 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
             <div>{['connecting', 'ringing'].includes(callStatus) ? `${callStatus}...` : callDuration}</div>
           </div>
 
-          <div className={`absolute bottom-4 max-w-screen-sm left-1/2 flex justify-center gap-6`}>
-            <button onClick={toggleMute} className="btn btn-circle btn-ghost border-white focus:outline-none">
-              {isMuted ? <Svg svgName="muteMicroPhone" className="fill-none stroke-current text-white h-8 w-8" /> : <Svg svgName="microPhone" className="fill-none stroke-current text-white h-8 w-8" />}
+          <div className="absolute bottom-20 w-full flex justify-center gap-6 ">
+            <button onClick={toggleMute} className="btn btn-circle btn-ghost border-gray-800 focus:outline-none bg-white">
+              {isMuted ? <Svg svgName="muteMicroPhone" className="fill-none stroke-current text-gray-800 h-8 w-8" /> : <Svg svgName="microPhone" className="fill-none stroke-current text-gray-800 h-8 w-8" />}
             </button>
-            <button onClick={toggleCamera} className="btn btn-circle btn-ghost border-white focus:outline-none">
-              {isCameraOff ? <Svg svgName="offVideoCall" className="fill-none stroke-current text-white h-8 w-8" /> : <Svg svgName="videoCall" className="fill-none stroke-current text-white h-8 w-8" />}
+            <button onClick={toggleCamera} className="btn btn-circle btn-ghost border-gray-800 focus:outline-none bg-white">
+              {isCameraOff ? <Svg svgName="offVideoCall" className="fill-none stroke-current text-gray-800 h-8 w-8" /> : <Svg svgName="videoCall" className="fill-none stroke-current text-gray-800 h-8 w-8" />}
             </button>
-            <button className="btn btn-circle btn-ghost border-white bg-red-800" onClick={endCall}>
+            <button className="btn btn-circle btn-ghost border-gray-800 bg-red-800" onClick={endCall}>
               <Svg
                 className="fill-none stroke-current text-white h-8 w-8"
                 viewBox="0 0 24 24"
