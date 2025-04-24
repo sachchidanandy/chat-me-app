@@ -41,7 +41,7 @@ export const signup = async (req: Request, res: Response) => {
   res.cookie('access_token', jwtToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 
@@ -75,7 +75,7 @@ export const loginUser = async (req: Request, res: Response) => {
   res.cookie('access_token', jwtToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 
@@ -96,7 +96,7 @@ export const logoutUser = async (req: Request, res: Response) => {
   res.clearCookie('access_token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
   });
   return sendSuccessResponse(res, { message: 'User logged out successfully!' });
 };

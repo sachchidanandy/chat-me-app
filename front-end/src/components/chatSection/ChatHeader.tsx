@@ -25,8 +25,8 @@ const ChatHeader = ({ isMobile, setShowMessageSection }: iChatSectionProps) => {
         {
           isMobile && <button
             onClick={() => setShowMessageSection(false)}
-            className={`btn btn-circle btn-ghost ${AnimationStyle.fadeIn}`}>
-            <Svg svgName="backArrow" className="text-primary" />
+            className={`btn btn-circle btn-ghost ${AnimationStyle.fadeIn} h-fit w-fit`}>
+            <Svg svgName="backArrow" className="text-primary h-6 w-6" />
           </button>
         }
         {

@@ -1,20 +1,20 @@
-
-
 import { NavLink } from "react-router";
 import { useAuth } from "../contextProvider/AuthProvider";
 import Svg from "./Svg";
 import { useFriends } from "../contextProvider/FriendsProvider";
 import { getNamesInitials } from "../utils/helpers";
 
+import AnimationStyle from "../utils/animation.module.css";
+
 // create a navigation bar
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, showNavBar } = useAuth();
   const { friendRequests } = useFriends();
   const { userId, profilePicUrl } = user || {};
   const pendingRequests = friendRequests?.pendingRequests;
 
-  return userId ? (
-    <nav className="navbar bg-primary text-primary-content">
+  return userId && showNavBar ? (
+    <nav className={`navbar bg-primary text-primary-content ${showNavBar ? AnimationStyle.fadeIn : AnimationStyle.fadeOut}`}>
       <div className="flex-1">
         <NavLink className="btn btn-ghost text-xl" to="/">Chit Chat</NavLink>
       </div>

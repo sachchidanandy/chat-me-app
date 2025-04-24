@@ -23,6 +23,8 @@ interface iAuthContext {
   logoutLoading: boolean;
   logout: () => Promise<void>;
   handleToastToogle: (message: string, type?: eToastType) => void;
+  showNavBar: boolean;
+  setShowNavBar: (status: boolean) => void;
 }
 const AuthContext = createContext<iAuthContext>({} as iAuthContext);
 
@@ -46,6 +48,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
   const [user, setUser] = useState<null | iUser>(null);
   const [showToast, setShowToast] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [showNavBar, setShowNavBar] = useState(false);
   const [toastDetails, setToastDetails] = useState({ message: '', type: eToastType.success });
   const { data: userData, error: initialError } = useFetchImediate('/auth/user', { withCredentials: true });
   const { loading: loginLoading, request: loginUser } = useFetch('/auth/login');
@@ -75,6 +78,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
         setUser({ ...user, pubKey: user.pubKey, priKey: privateKey } as unknown as iUser);
         socket.emit('user_online', user?.userId);
         requestNotificationPermission();
+        setShowNavBar(true);
       } else if (error) {
         handleToastToogle(error, eToastType.error);
       }
@@ -105,6 +109,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
         setUser({ ...user, pubKey: publicKey, priKey: privateKey } as unknown as iUser);
         socket.emit('user_online', user?.userId);
         requestNotificationPermission();
+        setShowNavBar(true);
       } else if (error) {
         handleToastToogle(error, eToastType.error);
       }
@@ -119,6 +124,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
     } finally {
       socket.emit('user_offline', userData?.user?.userId || user?.userId);
       setUser(null);
+      setShowNavBar(false);
       removePrivateKey();
       window.location.href = '/login';
     }
@@ -129,6 +135,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
       const privateKey = getPrivateKey();
       if (privateKey) {
         setUser({ ...userData.user, pubKey: userData.user.pubKey, priKey: getPrivateKey() } as unknown as iUser);
+        setShowNavBar(true);
         socket.emit('user_online', userData?.user?.userId);
         requestNotificationPermission();
       } else {
@@ -137,6 +144,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
       setInitialLoading(false);
     } else if (initialError) {
       setUser(null);
+      setShowNavBar(false);
       removePrivateKey();
       setInitialLoading(false);
     }
@@ -151,7 +159,9 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
       signUp,
       logoutLoading,
       logout,
-      handleToastToogle
+      handleToastToogle,
+      showNavBar,
+      setShowNavBar,
     }}>
       <Toast type={toastDetails.type} message={toastDetails.message} show={showToast} setShowToast={setShowToast} />
       {children}

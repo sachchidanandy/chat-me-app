@@ -381,7 +381,7 @@ const CallProvider = ({ children }: { children: React.ReactNode }) => {
             autoPlay
             playsInline
             muted
-            className="absolute bottom-4 right-4 w-36 h-24 sm:w-40 sm:h-28 rounded-lg border-2 border-white object-cover shadow-md"
+            className="absolute bottom-24 right-4 w-36 h-24 sm:w-40 sm:h-28 rounded-lg border-2 border-white object-cover shadow-md"
           />
           <div className="absolute top-4 left-4 text-xs sm:text-sm bg-black/50 px-3 py-2 rounded-lg">
             <div className="font-semibold truncate max-w-[100px] sm:max-w-none capitalize">{callerDetail?.fullName}</div>

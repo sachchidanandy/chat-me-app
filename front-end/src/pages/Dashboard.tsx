@@ -13,9 +13,11 @@ import UserSearchList from "../components/searchUsersList/UserSearchList";
 import { iSearchUser } from "../types/common";
 import FriendRequestModal from "../components/FriendRequestModal";
 import SkeletonFriendListLoader from "../components/SkeletonFriendListLoader";
+import { useAuth } from "../contextProvider/AuthProvider";
 
 const Dashboard = () => {
   const { friendId } = useParams();
+  const { setShowNavBar } = useAuth();
   const { friends, selectedFriends, chatListLoading, setSelectedFriends } = useFriends();
   const [filterData, setFilterData] = useState<iFriendsDetail[] | null>(null)
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,6 +97,10 @@ const Dashboard = () => {
       setShowMessageSection(true);
     }
   };
+
+  useEffect(() => {
+    setShowNavBar(shoulShowSearchSection);
+  }, [shoulShowSearchSection]);
 
   return (
     <div className="flex w-full h-full">
