@@ -104,7 +104,7 @@ const ChatFooter = () => {
   }, [mediaFile]);
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 justify-center relative">
+    <div className="flex items-center gap-2 px-4 py-2 justify-center sticky bottom-0">
       <button className="btn btn-circle btn-ghost text-white" onClick={() => setShowPicker(prev => !prev)}>
         <Svg svgName="emoji" />
       </button>

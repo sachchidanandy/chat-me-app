@@ -26,6 +26,21 @@ function App() {
     return () => window.removeEventListener("beforeunload", handleTabClose);
   }, []);
 
+  // In a top-level component
+  useEffect(() => {
+    const setHeight = () => {
+      document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+      if (window.innerWidth > 425) {
+        document.documentElement.style.setProperty('--chat-height', `${80}svh`);
+      } else {
+        document.documentElement.style.setProperty('--chat-height', `${window.innerHeight - 150}px`);
+      }
+    };
+    window.addEventListener('resize', setHeight);
+    setHeight();
+    return () => window.removeEventListener('resize', setHeight);
+  }, []);
+
   return (
     <AuthContextProvider>
       <FriendsProvider>
@@ -35,7 +50,7 @@ function App() {
               <Suspense fallback={<Loader />}>
                 <Navbar />
                 <div
-                  className="flex flex-col items-center justify-center align-center h-full w-full">
+                  className="flex flex-col items-center justify-center align-center h-[var(--app-height)] w-full">
                   <Routes>
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Signup />} />

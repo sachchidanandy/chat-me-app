@@ -14,12 +14,12 @@ const ChatSection = ({ isMobile, setShowMessageSection, showMessageSection }: iC
   const { selectedFriends } = useFriends();
 
   return (
-    <div className={`w-full h-full flex flex-col ${showMessageSection && AnimationStyle.slideInRightMessage}`}>
+    <div className={`w-full flex flex-col ${showMessageSection && AnimationStyle.slideInRightMessage}`} style={{ height: 'var(--app-height)' }}>
       {!selectedFriends.id && <NoChats message="Select a friend to start a conversation" />}
       {selectedFriends.id && (
         <>
           <ChatHeader isMobile={isMobile} setShowMessageSection={setShowMessageSection} />
-          <div className="flex flex-col grow h-full bg-cover bg-blend-overlay bg-no-repeat bg-neutral-900 bg-[url(/images/background-image.png)]">
+          <div className="flex flex-col justify-between grow bg-cover bg-blend-overlay bg-no-repeat bg-neutral-900 bg-[url(/images/background-image.png)]">
             <MessagesList />
             <ChatFooter />
           </div>

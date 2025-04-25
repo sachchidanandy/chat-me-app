@@ -79,7 +79,7 @@ const VoiceCallBar = (props: iVoiceCallBarProps) => {
 
   return (
     <div
-      className='flex items-center fixed bg-primary max-w-sm w-full p-1 gap-2 rounded'
+      className='flex items-center fixed bg-primary max-w-xs w-full p-1 gap-2 rounded'
       style={{ left: position.x, top: position.y, zIndex: 1000 }}
       onMouseDown={startDragMouse}
       onTouchStart={startDragTouch}

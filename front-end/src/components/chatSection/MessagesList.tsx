@@ -46,7 +46,7 @@ const MessagesList = () => {
 
   return (
     <div
-      className="w-full overflow-scroll mx-auto h-[80%] flex justify-center scroll-smooth"
+      className="w-full overflow-scroll flex justify-center scroll-smooth h-[var(--chat-height)] relative"
       onScroll={handleScroll}
       ref={listRef}>
       {
