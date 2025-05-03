@@ -58,6 +58,7 @@ const useFetch = (url: string): iUseApiResponse => {
       });
       result.data = response.data.data;
     } catch (error) {
+      console.error(error);
       const { response } = error as AxiosError;
       const errorMessage = (response?.data as errorResponseData)?.error?.message || 'Something went wrong!';
       result.error = errorMessage;
@@ -68,40 +69,6 @@ const useFetch = (url: string): iUseApiResponse => {
   }, [url]);
 
   return { loading, request };
-};
-
-export const useFetchImediate = (url: string, config: AxiosRequestConfig = {}): iFetchImediate<iResposseData> => {
-  const [state, setState] = useState<{
-    loading: boolean;
-    error: string | null;
-    data: iResposseData | null;
-  }>({
-    loading: false,
-    error: null,
-    data: null,
-  });
-
-  useEffect(() => {
-    setState(prev => ({ ...prev, loading: true }));
-    axiosInstance
-      .request({
-        method: 'GET',
-        url,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        ...config
-      })
-      .then(response => {
-        setState({ loading: false, error: null, data: response.data.data });
-      }).catch(error => {
-        const { response } = error as AxiosError;
-        const errorMessage = (response?.data as errorResponseData)?.error?.message || 'Something went wrong!';
-        setState({ loading: false, error: errorMessage, data: null });
-      });
-  }, []);
-
-  return { ...state };
 };
 
 export const useSearchDebounce = (url: string, searchQuery: string, page?: number, limit?: number): iFetchImediate<iResposseData> => {
@@ -140,6 +107,7 @@ export const useSearchDebounce = (url: string, searchQuery: string, page?: numbe
         .then(response => {
           setState({ loading: false, error: null, data: response.data.data });
         }).catch(error => {
+          console.error(error);
           const { response } = error as AxiosError;
           const errorMessage = (response?.data as errorResponseData)?.error?.message || 'Something went wrong!';
           setState({ loading: false, error: errorMessage, data: null });

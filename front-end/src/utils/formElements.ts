@@ -57,3 +57,18 @@ export const forgotPasswordForm = {
     errorMessage: emailValidationMessage
   },
 };
+
+export const resetPasswordForm = {
+  password: {
+    label: 'Password',
+    validationRules: passwordValidation,
+    type: 'password',
+    errorMessage: passwordValidationMessage
+  },
+  confirmPassword: {
+    label: 'Confirm Password',
+    validationRules: passwordValidation,
+    type: 'password',
+    errorMessage: passwordValidationMessage
+  },
+};

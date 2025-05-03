@@ -101,7 +101,7 @@ const Signup = (): JSX.Element => {
         </button>
       </form>
 
-      <div className="text-center">Already have an account? <Link to="/login" className="text-primary">Login here</Link></div>
+      <div className="text-center">Already have an account? <Link to="/login" className="text-primary underline">Login here</Link></div>
     </div>
   );
 }

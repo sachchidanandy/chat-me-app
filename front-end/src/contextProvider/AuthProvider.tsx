@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-import useFetch, { iResposseData, useFetchImediate } from "../hooks/useFetch";
+import useFetch, { iResposseData } from "../hooks/useFetch";
 import {
   decryptPrivateKey,
   encryptPrivateKey,
@@ -50,7 +50,7 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [showNavBar, setShowNavBar] = useState(false);
   const [toastDetails, setToastDetails] = useState({ message: '', type: eToastType.success });
-  const { data: userData, error: initialError } = useFetchImediate('/auth/user', { withCredentials: true });
+  const { loading: userDataLoading, request: loadUserData } = useFetch('/auth/user');
   const { loading: loginLoading, request: loginUser } = useFetch('/auth/login');
   const { loading: signupLoading, request: signupUser } = useFetch('/auth/sign-up');
   const { loading: logoutLoading, request: logoutUser } = useFetch('/auth/logout');
@@ -122,33 +122,39 @@ const AuthContextProvider = (props: iAuthContextProviderProps) => {
     } catch (error) {
       console.log("Error while logging out: ", error);
     } finally {
-      socket.emit('user_offline', userData?.user?.userId || user?.userId);
+      user?.userId && socket.emit('user_offline', user?.userId);
       setUser(null);
       setShowNavBar(false);
       removePrivateKey();
+      initialLoading && setInitialLoading(false);
       window.location.href = '/login';
     }
   };
 
-  useEffect(() => {
-    if (userData && userData.user) {
-      const privateKey = getPrivateKey();
-      if (privateKey) {
-        setUser({ ...userData.user, pubKey: userData.user.pubKey, priKey: getPrivateKey() } as unknown as iUser);
-        setShowNavBar(true);
-        socket.emit('user_online', userData?.user?.userId);
-        requestNotificationPermission();
-      } else {
-        logout();
-      }
+  const fetchUserDetails = async () => {
+    const { error, data } = await loadUserData({ withCredentials: true });
+    if (data?.user) {
+      const userData = data as iResposseData;
+      setUser({ ...userData.user, pubKey: userData.user.pubKey, priKey: getPrivateKey() } as unknown as iUser);
+      setShowNavBar(true);
+      socket.emit('user_online', userData?.user?.userId);
+      requestNotificationPermission();
       setInitialLoading(false);
-    } else if (initialError) {
-      setUser(null);
-      setShowNavBar(false);
-      removePrivateKey();
+    } else {
+      handleToastToogle(error || 'Error while fetching user details', eToastType.error);
+      logout();
+    }
+  };
+
+  useEffect(() => {
+    // check if private key found
+    const privateKey = getPrivateKey();
+    if (privateKey && !userDataLoading) {
+      fetchUserDetails();
+    } else {
       setInitialLoading(false);
     }
-  }, [userData, initialError]);
+  }, []);
 
   return initialLoading ? <Loader /> : (
     <AuthContext.Provider value={{

@@ -93,7 +93,7 @@ const Login = (): JSX.Element => {
         >{loginLoading ? 'Logging in...' : ' Login'}</button>
       </form>
 
-      <div className="text-center">Not a member? <Link to="/register" className="text-primary">Start Chatting.</Link></div>
+      <div className="text-center">Not a member? <Link to="/register" className="text-primary underline">Start Chatting.</Link></div>
     </div>
   );
 }

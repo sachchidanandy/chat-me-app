@@ -9,7 +9,6 @@ import { ErrorResponse } from "@utils/errorResponse";
 import { sendSuccessResponse } from "@utils/wrapper";
 import { Request, Response } from "express";
 import { io, redisStore } from "../index";
-import { AWS_S3_BUCKET_NAME } from '@utils/config';
 
 export const fetchMessages = async (req: Request, res: Response) => {
   const { friendsId } = req.params;
@@ -75,7 +74,7 @@ export const uploadMessageAttachement = async (req: Request, res: Response) => {
     // Check if S3 returned a Location field
     const fileUrl = result.Location
       ? result.Location
-      : `https://${AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
+      : `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${fileKey}`;
 
     io.emit(`uploadComplete-${fileId}`, {
       fileUrl,

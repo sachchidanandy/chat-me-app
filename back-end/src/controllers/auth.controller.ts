@@ -3,12 +3,21 @@ import { Request, Response } from "express";
 import User from '@models/user.model';
 import { BAD_REQUEST, CREATED, UNAUTHORISED } from "@constants/statusCode";
 import { sendSuccessResponse } from "@utils/wrapper";
-import { EMAIL_ALREADY_REGISTERED, INVALID_CREDENTIALS, USER_NOT_FOUND } from "@constants/errorMessages";
+import {
+  EMAIL_ALREADY_REGISTERED,
+  INVALID_CREDENTIALS,
+  USER_NOT_FOUND,
+  INVALID_REST_PASSWORD_TOKEN,
+  PASSWORD_MISMATCH,
+  EXPIRED_REST_PASSWORD_TOKEN,
+} from "@constants/errorMessages";
 import { ErrorResponse } from "@utils/errorResponse";
 import { generateToken } from "@utils/jwtToken";
 import { encryptPassword, comparePassword } from "@utils/encryption";
 import { activeUsers } from "./socket.controller";
 import { redisPub, redisStore } from "../index";
+import { sendEmail } from "@utils/mailer";
+import { generateResetPasswordToken, isNotValidResetToken } from "@utils/helper";
 
 export const signup = async (req: Request, res: Response) => {
   const { username, email, fullName, password, publicKey, encryptedPrivateKey } = req.body;
@@ -132,4 +141,66 @@ export const fetchLogedInUser = async (req: Request, res: Response) => {
   };
 
   return sendSuccessResponse(res, { user: responseBody, message: 'User detail fetched successfully.' });
+};
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new ErrorResponse(USER_NOT_FOUND, BAD_REQUEST);
+  }
+
+  const { resetToken, hashedToken } = generateResetPasswordToken();
+  const link = `${process.env.CORS_ALLOWED_DOMAIN}/reset-password/${resetToken}/${user._id}`;
+
+  const html = `<p>Click the link below to reset your password:</p>
+    <a href="${link}">Reset Password</a>
+    <span>This link will expire in 30 minutes.</span>
+    <br/>
+    <span>Thank you.</span>
+    <br/>
+    <span>Plain Url In Case of Error:</span>
+    <br/>
+    <span>${link}</span>
+  `;
+
+  // seve reset token to db
+  user.reset_password_token = hashedToken;
+  user.reset_password_token_expiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+  await user.save();
+
+  await sendEmail(process.env.EMAIL_ADDRESS ? [process.env.EMAIL_ADDRESS] : [user.email], 'Reset Password', html);
+  return sendSuccessResponse(res, { message: 'Password reset link having expiry of 30 minutes has been sent to registered email.' });
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { confirmPassword, password, token, userId } = req.body;
+
+  if (password !== confirmPassword) {
+    throw new ErrorResponse(PASSWORD_MISMATCH, BAD_REQUEST);
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ErrorResponse(USER_NOT_FOUND, BAD_REQUEST);
+  }
+
+  if (isNotValidResetToken(token, user.reset_password_token || '')) {
+    throw new ErrorResponse(INVALID_REST_PASSWORD_TOKEN, BAD_REQUEST);
+  }
+
+  if (!user.reset_password_token_expiry || user.reset_password_token_expiry < new Date()) {
+    throw new ErrorResponse(EXPIRED_REST_PASSWORD_TOKEN, BAD_REQUEST);
+  }
+
+  // ecrypt password
+  const encryptedPassword = await encryptPassword(password);
+
+  user.password = encryptedPassword;
+  user.reset_password_token = undefined;
+  user.reset_password_token_expiry = undefined;
+  await user.save();
+
+  return sendSuccessResponse(res, { message: 'Password reset successfully. Please login' });
 };

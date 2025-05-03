@@ -9,6 +9,8 @@ interface iUser extends Document {
   priv_key: string;
   profile_pic_url: string;
   last_seen: Date;
+  reset_password_token?: string;
+  reset_password_token_expiry?: Date;
 };
 
 const userSchema = new Schema<iUser>({
@@ -51,7 +53,13 @@ const userSchema = new Schema<iUser>({
   last_seen: {
     type: Date,
     default: Date.now
-  }
+  },
+  reset_password_token: {
+    type: String
+  },
+  reset_password_token_expiry: {
+    type: Date
+  },
 }, { timestamps: true });
 
 // Not adding any specific index as already added search_users index in mongoDB Atlas
