@@ -115,7 +115,7 @@ const ResetPassword = () => {
       </form> : (
         <h3 className="text-xl my-2 text-center text-secondary">
           {paswordResetSuccess}
-          <Link to="/login" className="text-primary underline">Login here</Link>
+          <Link to="/login" className="text-primary underline">Here</Link>
         </h3>
 
       )}
